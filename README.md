@@ -145,6 +145,9 @@ This repository is released under the MIT License.
 
 If this work contributes to your research, please cite the associated manuscript.
 
-A Zenodo DOI will be added upon archival release.
+The reference implementation and validation scripts are publicly archived at Zenodo:
+\url{https://doi.org/10.5281/zenodo.20102180}
+
+
 
 
