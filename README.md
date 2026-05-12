@@ -170,7 +170,7 @@ Rodríguez Arias, Y. A., & Arellano González, S.
 "A Unified Structural and Operator Framework for the Linear n-Mass Pendulum"
 
 DOI:
-https://zenodo.org/records/20102180
+https://doi.org/10.5281/zenodo.20102179
 The reference implementation and validation scripts are publicly archived at Zenodo:
 
 
