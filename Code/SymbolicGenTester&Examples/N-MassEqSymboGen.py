@@ -41,12 +41,6 @@ for d in range(1, n + 1):
 
         if k == d:
 
-            # Previous version:
-            # mu * l[d-1]
-
-            # Corrected version:
-            # mu * l[d-1]**2
-
             eq_lhs += (
                 mu
                 * (l[d - 1] ** 2)
@@ -54,12 +48,6 @@ for d in range(1, n + 1):
             )
 
         else:
-
-            # Previous version:
-            # mu * l[k-1]
-
-            # Corrected version:
-            # mu * l[d-1] * l[k-1]
 
             eq_lhs += (
                 mu
