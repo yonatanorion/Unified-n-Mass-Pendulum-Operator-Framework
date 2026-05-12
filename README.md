@@ -16,18 +16,39 @@ The project presents:
 # Repository Structure
 
 ```text
-.
-├── figures/
-│   └── linear_validation.png
+REPOSITORY PAPER/
 │
-├── src/
-│   ├── __init__.py
-│   ├── assembly.py
-│   └── propagator.py
+├── Code/
+│   │
+│   ├── figures/
+│   │   └── linear_validation.png
+│   │
+│   ├── src/
+│   │   ├── __init__.py
+│   │   ├── assembly.py
+│   │   └── propagator.py
+│   │
+│   ├── SymbolicGenTester&Examples/
+│   │   ├── N-MassEqSymboGen.py
+│   │   ├── Output_Equations_pendulum_5_masses.md
+│   │   ├── Output_Equations_pendulum_5_masses.pdf
+│   │   └── README.md
+│   │
+│   ├── validation/
+│   │   ├── generate_figures.py
+│   │   └── run_validation.py
+│   │
+│   └── setup.py
 │
-├── validation/
-│   ├── generate_figures.py
-│   └── run_validation.py
+├── Paper/
+│   │
+│   ├── figures/
+│   │
+│   ├── Main.tex
+│   │
+│   └── RodriguezArias_ArellanoGonzalez_UnifiedFramework_NMassPendulum_JTCAM.pdf.pdf
+│
+├── .gitignore
 │
 └── README.md
 ```
