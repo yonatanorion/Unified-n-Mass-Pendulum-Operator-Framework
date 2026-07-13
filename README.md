@@ -8,8 +8,10 @@ The project presents:
 
 * Structural matrix assembly via the **cumulative mass-sum rule**
 * Linear state-space generation for arbitrary (n)-mass pendulums
-* Operator-based propagation using a truncated **Peano–Baker series**
+* Standard modal decoupling through a generalized eigenvalue problem
+* Operator-based propagation using a scaled-and-squared **Peano-Baker/Taylor series**
 * Numerical validation against the exact matrix exponential
+* A nonlinear double-pendulum energy check for the corrected coupling sign
 
 ---
 
@@ -26,6 +28,8 @@ REPOSITORY PAPER/
 │   ├── src/
 │   │   ├── __init__.py
 │   │   ├── assembly.py
+│   │   ├── modal.py
+│   │   ├── nonlinear.py
 │   │   └── propagator.py
 │   │
 │   ├── SymbolicGenTester&Examples/
@@ -67,27 +71,41 @@ Implements the linear matrix assembly using the cumulative mass-sum rule:
 
 Core formulation:
 
-$[
+$$
 M_{jk} =
 \left(
 \sum_{i=\max(j,k)}^n m_i
 \right)
 l_j l_k
-]$
+$$
 
 ---
 
 ## `src/propagator.py`
 
-Implements operator-based linear propagation using the truncated Peano–Baker expansion:
+Implements operator-based linear propagation using a scaled-and-squared Peano-Baker/Taylor expansion:
 
-$[
-\Phi(\Delta t)=
-\sum_{k=0}^{N}
-\frac{(A\Delta t)^k}{k!}
-]$
+$$
+B=\frac{A\Delta t}{2^s}, \qquad
+\Phi(\Delta t)\approx
+\left(\sum_{k=0}^{N}\frac{B^k}{k!}\right)^{2^s}
+$$
 
-The transition matrix is precomputed once and reused efficiently across simulations.
+Scaling controls the truncation error when $\lVert A\Delta t\rVert$ is not small. The transition matrix is precomputed once and reused efficiently across simulations.
+
+---
+
+## `src/modal.py`
+
+Implements the standard generalized-eigenvalue solution of
+$M\ddot{\theta}+K\theta=0$ and provides an independent reference for the
+state-space propagator.
+
+## `src/nonlinear.py`
+
+Implements the exact nonlinear mass matrix, velocity-squared vector, gravity
+vector, state derivative, and total energy. The velocity vector uses
+$\sin(\theta_d-\theta_k)$ without an additional index-dependent sign.
 
 ---
 
@@ -96,8 +114,9 @@ The transition matrix is precomputed once and reused efficiently across simulati
 Reproduces the numerical tables from the manuscript:
 
 * Structural scaling benchmarks
-* Linear propagation validation
-* RK4 comparison
+* Linear propagation validation against `scipy.linalg.expm` and modal decoupling
+* RK4 consistency comparison
+* Nonlinear energy conservation and sign-regression check
 
 ---
 
@@ -131,13 +150,13 @@ pip install numpy scipy matplotlib
 ## Run numerical validations
 
 ```bash
-python validation/run_validation.py
+python Code/validation/run_validation.py
 ```
 
 ## Generate figures
 
 ```bash
-python validation/generate_figures.py
+python Code/validation/generate_figures.py
 ```
 
 ---
@@ -169,11 +188,7 @@ If you use this repository, please cite:
 Rodríguez Arias, Y. A., & Arellano González, S.
 "A Unified Structural and Operator Framework for the Linear n-Mass Pendulum"
 
-DOI:
-https://doi.org/10.5281/zenodo.20102179
-The reference implementation and validation scripts are publicly archived at Zenodo:
+Concept DOI: https://doi.org/10.5281/zenodo.20102179
 
-
-
-
+Version DOI used by the manuscript: https://doi.org/10.5281/zenodo.20102180
 
