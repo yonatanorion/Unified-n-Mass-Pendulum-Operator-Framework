@@ -14,7 +14,7 @@
 \usepackage{listings}        
 \usepackage{microtype}
 \usepackage{graphicx}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{geometry}
 \usepackage{doi}
 \setlength{\emergencystretch}{2em}
@@ -23,17 +23,17 @@
 
 % Colors for listings
 \definecolor{codebg}{rgb}{0.95,0.95,0.97}
-\definecolor{jtcamblue}{RGB}{10,40,80}
+\definecolor{frameworkblue}{RGB}{10,40,80}
 \lstset{
     language=Python,
     basicstyle=\ttfamily\footnotesize,
     backgroundcolor=\color{codebg},
     frame=single,
-    rulecolor=\color{jtcamblue},
+    rulecolor=\color{frameworkblue},
     breaklines=true,
     showstringspaces=false,
     commentstyle=\color{green!60!black}\itshape,
-    keywordstyle=\color{jtcamblue}\bfseries,
+    keywordstyle=\color{frameworkblue}\bfseries,
     stringstyle=\color{red!70!black},
     numbers=left,
     numberstyle=\tiny\color{gray},
@@ -58,15 +58,15 @@
          Unidad Profesional ``Adolfo L\'opez Mateos'' Building 5, 3rd floor, 
          Zacatenco, Delegaci\'on Gustavo A. Madero, Ciudad de M\'exico, 07738}
 % Fecha
-\date{May 2026}
+\date{July 2026}
 \begin{document}
 \maketitle
 \begin{abstract}
 \noindent A computational framework is presented that bridges the symbolic generation and linear dynamic propagation of the $n$-mass pendulum. The core contribution is the identification of a structural cumulative mass-sum rule that naturally governs the inertial, coupling, and gravitational terms derived from Lagrange's equations. This universal organizing principle eliminates the need for manual or recursive indexing, yielding a compact, explicit matrix assembly algorithm for arbitrary $n$.
 
-The assembled linear system is expressed in state-space form and propagated using the matrix exponential, implemented via a truncated Peano-Baker series. The framework is intentionally limited to the linear regime, where it provides propagation that is numerically equivalent to the matrix exponential within truncation tolerance (within machine precision). Because the transition matrix is constant for fixed parameters and timestep, it can be precomputed once and reused efficiently across repeated simulations, parameter sweeps, or control evaluations.
+The assembled linear system is solved both by standard modal decoupling and in state-space form.  The latter is propagated with a scaled-and-squared truncated Peano--Baker (Taylor) series for the matrix exponential.  The framework is intentionally limited to the linear regime, where both implementations agree with a reference matrix exponential to double-precision round-off. Because the transition matrix is constant for fixed parameters and timestep, it can be precomputed once and reused efficiently across repeated simulations, parameter sweeps, or control evaluations.
 
-A brief discussion outlines how the same operator architecture could be extended to weakly nonlinear regimes using Picard iterations; however, a full nonlinear treatment is left as future work. The proposed pipeline offers pedagogical transparency and explicit structural mapping, serving as a unified bridge between symbolic multibody generation and operator-based linear solution strategies.
+A brief discussion records the variation-of-constants representation for a possible nonlinear extension and points to modern exponential integrators; a full nonlinear method is outside the scope of this work. The proposed pipeline offers pedagogical transparency and explicit structural mapping, serving as a unified bridge between symbolic multibody generation and linear solution strategies.
 \end{abstract}
 
 \noindent\textbf{Keywords:} Multi-body Dynamics, $n$-mass Pendulum, Structural Generation, Linear State-Space, Matrix Exponential, Peano-Baker Series
@@ -81,7 +81,7 @@ Several mature approaches exist for multibody equation generation and simulation
 
 The present work pursues a different and complementary objective: \textbf{explicit structural transparency}. Instead of focusing on raw computational speed for massive degrees of freedom, the main contribution is the identification of a cumulative mass-sum pattern that acts as a universal algebraic organizing principle throughout the linearized equations of motion.
 
-The assembled linear system is then propagated using the matrix exponential, realized computationally via a truncated Peano-Baker series. While the Peano-Baker machinery is mathematically standard, its combination with the explicit structural assembly provides a clean operator-based pipeline. The conceptual pipeline is illustrated in Figure~\ref{fig:pipeline}.
+The resulting symmetric positive-definite second-order system admits the standard generalized-eigenvalue (modal) solution.  We use that solution as an independent reference and retain a state-space matrix-exponential implementation for applications in which a transition operator is convenient, such as control and repeated propagation.  The matrix exponential is evaluated by a scaled-and-squared truncated Peano--Baker (Taylor) series; this numerical device is standard and is not claimed as a new matrix-exponential algorithm. The conceptual pipeline is illustrated in Figure~\ref{fig:pipeline}.
 
 \begin{figure}[htbp]
   \centering
@@ -103,7 +103,7 @@ The assembled linear system is then propagated using the matrix exponential, rea
   \label{fig:pipeline}
 \end{figure}
 
-The paper is organized as follows. Sections 2–4 develop the symbolic generation framework and introduce the cumulative mass-sum rule. Sections 5–6 derive the state-space system and the operator-based propagator. Section 7 presents validation results in the linear regime. Section 8 briefly outlines a possible nonlinear extension (as a proof of concept) and delimits it as future work. Finally, Section 9 concludes.
+The paper is organized as follows. Sections 2--4 develop the symbolic generation framework and introduce the cumulative mass-sum rule. Sections 5--6 derive the state-space system and the operator-based propagator. Section 7 presents validation results in the linear regime. Section 8 briefly outlines a possible nonlinear extension (as a proof of concept) and delimits it as future work. Finally, Section 9 concludes.
 
 \section{Lagrangian Formulation of the \texorpdfstring{$n$}{n}-Mass Pendulum}
 \label{sec:lagrangian}
@@ -129,7 +129,7 @@ Each generalized coordinate $\theta_i$ is measured with respect to the downward 
   x_i &= \sum_{k=1}^{i} l_k \sin\theta_k, \label{eq:xi} \\
   y_i &= -\sum_{k=1}^{i} l_k \cos\theta_k. \label{eq:yi}
 \end{align}
-The origin is taken at the pivot, with the positive $x$‑axis to the right and the positive $y$‑axis upward.  This convention ensures that when all $\theta_k = 0$ (vertical downward equilibrium), $y_i = -\sum_{k=1}^i l_k$ and $x_i=0$.
+The origin is taken at the pivot, with the positive $x$-axis to the right and the positive $y$-axis upward.  This convention ensures that when all $\theta_k = 0$ (vertical downward equilibrium), $y_i = -\sum_{k=1}^i l_k$ and $x_i=0$.
 
 \begin{figure}[htbp]
   \centering
@@ -233,18 +233,15 @@ We define the mass matrix $\M(\boldsymbol{\theta})$ and the Coriolis/centrifugal
 \[
 \M(\boldsymbol{\theta})\ddot{\boldsymbol{\theta}} + \mathbf{c}(\boldsymbol{\theta},\dot{\boldsymbol{\theta}}) + \mathbf{g}(\boldsymbol{\theta}) = \mathbf{0},
 \]
-where $\mathbf{g}(\boldsymbol{\theta})$ is the gravitational torque vector.  The cumulative mass‑sum rule gives explicit formulas:
+where $\mathbf{g}(\boldsymbol{\theta})$ is the gravitational torque vector.  The cumulative mass-sum rule gives explicit formulas:
 \begin{align}
 M_{jk}(\boldsymbol{\theta}) &= \left(\sum_{i=\max(j,k)}^{n} m_i\right) l_j l_k \cos(\theta_j-\theta_k), \\
 c_d(\boldsymbol{\theta},\dot{\boldsymbol{\theta}}) &=
 \sum_{k=1}^{n} \left(\sum_{i=\max(d,k)}^{n} m_i\right) l_d l_k \,
-\dot{\theta}_k^2 \sin(\theta_d-\theta_k) \cdot
-\begin{cases}
-+1 & \text{if } d \le k \\
--1 & \text{if } d > k
-\end{cases}, \\
+\dot{\theta}_k^2 \sin(\theta_d-\theta_k), \\
 g_d(\boldsymbol{\theta}) &= \left(\sum_{i=d}^{n} m_i\right) g l_d \sin\theta_d.
 \end{align}
+The sine difference alone determines the sign of every velocity-squared term; no additional index-dependent sign is present.  For example, when $d=2$ and $k=1$, $\sin(\theta_2-\theta_1)=-\sin(\theta_1-\theta_2)$, exactly as in Eq.~(\ref{eq:j2}).
 For the linearized case (small angles) we set $\cos(\cdot)=1$, $\sin(\cdot)=0$ except in the gravitational term where $\sin\theta_d\approx\theta_d$.
 
 \subsection{Algorithm for Linear System Assembly}
@@ -257,32 +254,36 @@ The following algorithm constructs the linearized system matrices directly from 
   \begin{algorithmic}[1]
     \Require masses $m_1,\ldots,m_n$, lengths $l_1,\ldots,l_n$, $g$
     \Ensure mass matrix $\M$, stiffness matrix $\K$
+    \State $S_n \gets m_n$
+    \For{$j \gets n-1$ \textbf{down to} $1$}
+      \State $S_j \gets m_j + S_{j+1}$
+    \EndFor
     \For{$j \gets 1$ \textbf{to} $n$}
       \For{$k \gets 1$ \textbf{to} $n$}
-        \State $M_{jk} \gets \bigl(\sum_{i=\max(j,k)}^n m_i\bigr) l_j l_k$
+        \State $M_{jk} \gets S_{\max(j,k)} l_j l_k$
       \EndFor
-      \State $K_{jj} \gets \bigl(\sum_{i=j}^n m_i\bigr) g l_j$
+      \State $K_{jj} \gets S_j g l_j$
     \EndFor
   \end{algorithmic}
 \end{algorithm}
 
 \subsection{Algorithmic Scaling}
 
-Table~\ref{tab:scaling-generation} confirms the structural generation process scales exactly with the theoretical $\mathcal{O}(n^2)$ complexity of the assembly loop, yielding $2n^2 + 3n + 1$ distinct analytical terms without symbolic overhead. Benchmarks were performed in Python 3.13 on AMD Ryzen 9 3900X 12-Core Processor (3.79 GHz) CPU using NumPy/SciPy with standard BLAS routines.
+The suffix masses $S_j$ require $\mathcal{O}(n)$ work and are computed once.  The subsequent loop assigns $n^2$ entries of $\M$ and $n$ nonzero entries of $\K$, so the assembly requires $\mathcal{O}(n^2)$ work and storage.  Recomputing the sum $\sum_{i=\max(j,k)}^n m_i$ inside every matrix entry would instead require $\mathcal{O}(n^3)$ work and is deliberately avoided.
 
 \begin{table}[htbp]
   \centering
-  \caption{Symbolic generation scaling with number of masses.}
+  \caption{Number of entries assigned by the linear matrix assembly.}
   \label{tab:scaling-generation}
   \begin{tabular}{cccc}
     \toprule
-    $n$ & Generation time (s) & Number of terms & $\mathcal{O}(n^2)$ scaling \\
+    $n$ & Entries of $\M$ & Nonzero entries of $\K$ & Total \\
     \midrule
-    2 & $0.0004$ & $15$ & $4$ \\
-    4 & $0.0002$ & $45$ & $16$ \\
-    6 & $0.0005$ & $91$ & $36$ \\
-    8 & $0.0005$ & $153$ & $64$ \\
-    10 & $0.0006$ & $231$ & $100$ \\
+    2 & 4 & 2 & 6 \\
+    4 & 16 & 4 & 20 \\
+    6 & 36 & 6 & 42 \\
+    8 & 64 & 8 & 72 \\
+    10 & 100 & 10 & 110 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -304,7 +305,7 @@ where $\M$ and $\K$ are constant matrices.
 
 \subsection{Derivation of the Mass Matrix}
 
-Inserting the small‑angle approximation $\cos(\theta_j-\theta_k)\approx 1$ into the general expression for $M_{jk}(\boldsymbol{\theta})$ yields the constant mass matrix
+Inserting the small-angle approximation $\cos(\theta_j-\theta_k)\approx 1$ into the general expression for $M_{jk}(\boldsymbol{\theta})$ yields the constant mass matrix
 \begin{equation}\label{eq:Mjk}
   M_{jk} = \left(\sum_{i=\max(j,k)}^{n} m_i\right) l_j l_k.
 \end{equation}
@@ -322,7 +323,22 @@ Therefore the stiffness matrix $\K$ is diagonal:
 \begin{equation}\label{eq:Kjk}
   K_{jk} = \left(\sum_{i=j}^{n} m_i\right) g l_j \,\delta_{jk}.
 \end{equation}
-No off‑diagonal entries appear because the quadratic potential contains only $\theta_j^2$ terms; the coordinate convention (angles measured from the downward vertical) eliminates $\theta_i\theta_j$ cross couplings.
+No off-diagonal entries appear because the quadratic potential contains only $\theta_j^2$ terms; the coordinate convention (angles measured from the downward vertical) eliminates $\theta_i\theta_j$ cross couplings.
+
+\subsection{Standard Modal Decoupling}
+
+Because $\M$ and $\K$ are symmetric positive definite for positive masses and lengths, the generalized eigenproblem admits an $\M$-orthonormal modal matrix $\mathbf{U}$:
+\begin{equation}\label{eq:modal-eigenproblem}
+  \K\mathbf{U}=\M\mathbf{U}\boldsymbol{\Omega}^{2},\qquad
+  \mathbf{U}\trans\M\mathbf{U}=\mathbf{I},\qquad
+  \mathbf{U}\trans\K\mathbf{U}=\boldsymbol{\Omega}^{2},
+\end{equation}
+where $\boldsymbol{\Omega}=\operatorname{diag}(\omega_1,\ldots,\omega_n)$ and $\omega_j>0$.  With $\boldsymbol{\theta}=\mathbf{U}\mathbf{q}$, the system decouples into $\ddot q_j+\omega_j^2q_j=0$, with the exact solution
+\begin{equation}\label{eq:modal-solution}
+  q_j(t)=q_j(0)\cos(\omega_j t)
+  +\frac{\dot q_j(0)}{\omega_j}\sin(\omega_j t).
+\end{equation}
+This is the natural direct solution for the unforced linear second-order problem and is used below as an independent numerical reference.
 
 \subsection{State-Space Representation}
 
@@ -334,7 +350,7 @@ Define the state vector $\Rstate(t) = (\boldsymbol{\theta}(t), \dot{\boldsymbol{
 -\M^{-1}\K & \mathbf{0}
 \end{pmatrix}.
 \end{equation}
-The matrix $\A$ is constant, which allows the use of explicit operator-based propagators.
+The matrix $\A$ is constant, which allows the use of explicit operator-based propagators.  This first-order form is not required for the modal solution; it is retained because a reusable transition matrix is convenient in state-space control, forcing, and estimation workflows.
 
 \section{Operator-Based Dynamic Propagation}
 \label{sec:operator}
@@ -344,32 +360,34 @@ The matrix $\A$ is constant, which allows the use of explicit operator-based pro
 Because $\A$ is constant, the state transition matrix from $0$ to $t$
 is the matrix exponential $\Phi(t,0)=e^{\A t}$.
 
-Although the present linear autonomous case reduces to the classical
-matrix exponential, we deliberately retain the Peano--Baker/operator
-formulation because it provides the natural structural bridge toward
-the nonlinear Volterra--Picard extension discussed in Section~\ref{sec:future-nonlinear}.
+For the autonomous system considered here, the Peano--Baker series is
+exactly the Taylor series of the matrix exponential.  A direct truncated
+Taylor series can be inaccurate when $\|\A\Delta t\|$ is large
+\cite{moler2003dubious}, so the implementation uses scaling and squaring.
 
-A convenient numerical implementation uses the truncated Peano-Baker
-(Taylor) series:
+A convenient implementation defines $\mathbf{X}=\A\Delta t$ and chooses
+$s=\max\{0,\lceil\log_2(\|\mathbf{X}\|_{\infty}/\eta)\rceil\}$ with
+$\eta=1/2$.  For $\mathbf{B}=\mathbf{X}/2^s$, the approximation is
 \begin{equation}\label{eq:peano-truncated}
-  \Phi(\Delta t) \approx \sum_{k=0}^{N} \frac{(\A \Delta t)^k}{k!}.
+  \Phi(\Delta t) \approx
+  \left(\sum_{k=0}^{N} \frac{\mathbf{B}^k}{k!}\right)^{2^s}.
 \end{equation}
-The truncation error is bounded by $\frac{\|\A\Delta t\|^{N+1}}{(N+1)!} e^{\|\A\Delta t\|}$; choosing $N=20$ with $\|\A\Delta t\|\sim 0.1$ yields an error below machine epsilon. Thus the computed propagation is numerically equivalent to the exact matrix exponential within truncation tolerance.
+Scaling controls the Taylor remainder before repeated squaring.  With $N=20$, the tested systems agree with both \texttt{scipy.linalg.expm} and the modal solution to double-precision round-off.  This implementation is included for transparency; robust library routines based on established matrix-exponential algorithms should be preferred outside the tested parameter range.
 
 \subsection{Propagation Algorithm and Reusability}
 
-Once $\Phi(\Delta t)$ is precomputed (using the truncated series), the linear propagation over a time step is simply
+Once $\Phi(\Delta t)$ is precomputed (using the scaled series), the linear propagation over a time step is simply
 \[
 \Rstate(t+\Delta t) = \Phi(\Delta t) \Rstate(t).
 \]
-This requires only matrix‑vector multiplications, making it highly efficient for repeated time stepping. Importantly, because $\Phi(\Delta t)$ is constant for fixed system parameters and time step, it can be precomputed once and reused across many simulations (e.g., parameter sweeps, Monte Carlo runs, or real-time control loops). This reusability is a key practical advantage of the operator-based formulation.
+This requires only matrix-vector multiplications, making it highly efficient for repeated time stepping. Importantly, because $\Phi(\Delta t)$ is constant for fixed system parameters and time step, it can be precomputed once and reused across many simulations (e.g., parameter sweeps, Monte Carlo runs, or real-time control loops). This reusability is a key practical advantage of the operator-based formulation.
 
 \section{Numerical Validation (Linear Regime)}
 \label{sec:validation}
 
 \subsection{Linear Validation}
 
-To ensure a comprehensive evaluation and guarantee reproducibility, the linear framework was validated across four distinct test cases. In all scenarios, the gravitational acceleration was set to $g = 9.81$ m/s$^2$ and the systems were released from rest ($\dot{\boldsymbol{\theta}}(0) = \mathbf{0}$). The specific parameter sets—masses $m$ (in kg), lengths $l$ (in m), and initial angular displacements $\boldsymbol{\theta}(0)$ (in radians)—are defined as follows:
+To ensure a comprehensive evaluation and guarantee reproducibility, the linear framework was validated across four distinct test cases. In all scenarios, the gravitational acceleration was set to $g = 9.81$ m/s$^2$ and the systems were released from rest ($\dot{\boldsymbol{\theta}}(0) = \mathbf{0}$). The specific parameter sets--masses $m$ (in kg), lengths $l$ (in m), and initial angular displacements $\boldsymbol{\theta}(0)$ (in radians)--are defined as follows:
 \begin{itemize}
   \item \textbf{$n=2$ (uniform):} $m_i = 1.0$, $l_i = 1.0$, and $\boldsymbol{\theta}(0) = [0.1, 0.05]\trans$.
   \item \textbf{$n=3$ (uniform):} $m_i = 1.0$, $l_i = 1.0$, and $\boldsymbol{\theta}(0) = [0.1, 0.05, 0.02]\trans$.
@@ -377,16 +395,16 @@ To ensure a comprehensive evaluation and guarantee reproducibility, the linear f
   \item \textbf{$n=5$ (uniform):} $m_i = 1.0$, $l_i = 1.0$, and $\boldsymbol{\theta}(0) = [0.1, 0.05, 0.02, 0.01, 0.005]\trans$.
 \end{itemize}
 
-These configurations provide a robust baseline to verify the algorithmic assembly and propagation accuracy across varying dimensionalities and inertial distributions. The Peano-Baker series was truncated at $N = 20$ with a time step of $\Delta t = 0.01$ s. Reference solutions were generated via direct matrix exponentiation (\texttt{scipy.linalg.expm}), which is considered the exact reference up to numerical precision.
+These configurations provide a baseline for verifying the assembly and propagation across varying dimensionalities and inertial distributions. The scaled Peano--Baker series was truncated at $N = 20$ with a time step of $\Delta t = 0.01$ s. Reference solutions were generated both by direct matrix exponentiation (\texttt{scipy.linalg.expm}) and by the generalized-eigenvalue solution in Eq.~(\ref{eq:modal-solution}).
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.8\textwidth]{figures/linear_validation.png}
-  \caption{Linear validation results for the evaluated configurations. Left column: time-domain trajectories showing Peano-Baker stepping (dashed) vs. exact matrix exponential (solid). Right column: absolute algorithmic error confirming machine-precision agreement.}
+  \caption{Linear validation results for the evaluated configurations. Left column: time-domain trajectories showing scaled-series stepping (dashed) versus the reference matrix exponential (solid). Right column: absolute algorithmic error confirming double-precision agreement.}
   \label{fig:linear_validation}
 \end{figure}
 
-Table~\ref{tab:linear-errors} confirms that the error between the Peano-Baker propagation and the reference matrix exponential remains at the level of double-precision round-off ($\sim 10^{-15}$ rad), i.e., within machine precision.
+Table~\ref{tab:linear-errors} confirms that both independent solution paths agree with the reference matrix exponential at the level of double-precision round-off.
 
 \begin{table}[htbp]
   \centering
@@ -395,42 +413,60 @@ Table~\ref{tab:linear-errors} confirms that the error between the Peano-Baker pr
   \begin{tabular}{ccccc}
     \toprule
     \textbf{System} & \textbf{Parameters}
-    & \textbf{State dim.}
-    & $\Delta t$ (s) & \textbf{Max error (rad)} \\
+    & $\Delta t$ (s)
+    & \textbf{Scaled series} & \textbf{Modal solution} \\
     \midrule
-    $n=2$ & uniform     & $4$  & $0.01$ & $1.51 \times 10^{-14}$ \\
-    $n=3$ & uniform     & $6$  & $0.01$ & $9.41 \times 10^{-15}$ \\
-    $n=3$ & non-uniform & $6$  & $0.01$ & $4.41 \times 10^{-15}$ \\
-    $n=5$ & uniform     & $10$ & $0.01$ & $5.45 \times 10^{-15}$ \\
+    $n=2$ & uniform     & $0.01$ & $6.88 \times 10^{-15}$ & $9.71 \times 10^{-16}$ \\
+    $n=3$ & uniform     & $0.01$ & $2.75 \times 10^{-15}$ & $1.57 \times 10^{-15}$ \\
+    $n=3$ & non-uniform & $0.01$ & $1.60 \times 10^{-15}$ & $8.19 \times 10^{-16}$ \\
+    $n=5$ & uniform     & $0.01$ & $9.28 \times 10^{-15}$ & $1.31 \times 10^{-15}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\subsection{Comparison with Standard Linear Integrators}
+\subsection{Nonlinear Sign and Energy Check}
 
-For completeness, the proposed method was compared to a classical fourth-order Runge-Kutta (RK4) integrator applied to the same linear system. The Peano-Baker approach reproduces the matrix exponential up to truncation error, whereas RK4 introduces a local discretization error of $\mathcal{O}(\Delta t^4)$. Table~\ref{tab:comparison} shows that for a moderately large time step ($\Delta t = 0.1$ s), the Peano-Baker method maintains machine-precision accuracy while RK4 exhibits visible error. Benchmarks were performed on the same hardware/software environment as in Table~\ref{tab:scaling-generation}.
+Although the main numerical study is linear, the sign in the exact velocity vector was checked directly using the double-pendulum parameters $m_1=m_2=l_1=l_2=1$, $g=9.81$, $\theta_1(0)=5^{\circ}$, $\theta_2(0)=0$, and zero initial velocities.  The exact nonlinear equations were integrated over $0\le t\le6$ with DOP853 using relative and absolute tolerances $10^{-12}$ and $10^{-14}$, respectively.  Table~\ref{tab:energy-sign} shows the maximum drift in the physical energy $T+U$.  The corrected expression remains at round-off, whereas inserting the erroneous extra piecewise sign produces the reported $10^{-4}$-level drift.
 
 \begin{table}[htbp]
   \centering
-  \caption{Comparison of Peano-Baker and RK4 for the $n=3$ non-uniform pendulum (linear regime).}
-  \label{tab:comparison}
-  \begin{tabular}{lccc}
+  \caption{Maximum absolute energy drift in the nonlinear double-pendulum sign check.}
+  \label{tab:energy-sign}
+  \begin{tabular}{lc}
     \toprule
-    \textbf{Method} & $\Delta t$ (s) & \textbf{Max error (rad)} & \textbf{Time (s)} \\
+    \textbf{Velocity-squared term} & $\max_t |E(t)-E(0)|$ \\
     \midrule
-    Peano-Baker ($N=20$) & $0.1$ & $3.2 \times 10^{-15}$ & $0.0003$ \\
-    RK4 & $0.1$ & $9.2 \times 10^{-4}$ & $0.0013$ \\
-    RK4 & $0.01$ & $9.4 \times 10^{-8}$ & $0.0134$ \\
+    Corrected $\sin(\theta_d-\theta_k)$ & $3.55 \times 10^{-15}$ \\
+    Former expression with extra piecewise sign & $2.26 \times 10^{-4}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-The comparison is not meant to show superiority of one method over another, but rather to illustrate that the proposed operator-based propagation achieves machine-precision linear propagation with a fixed precomputation cost, which can be advantageous in applications where the same linear system is propagated many times (e.g., parameter sweeps, linear control design).
+\subsection{Consistency Check with RK4}
+
+For completeness, the state-space implementation was also checked against classical fourth-order Runge--Kutta (RK4) on the same linear system.  RK4 is a general-purpose time-stepper rather than a method tailored to this constant linear problem, so this comparison is only a discretization consistency check; the modal solution is the more appropriate direct baseline. Table~\ref{tab:comparison} reports errors for a moderately large time step and for a ten-times-smaller RK4 step.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Consistency check for the $n=3$ non-uniform pendulum (linear regime).}
+  \label{tab:comparison}
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Method} & $\Delta t$ (s) & \textbf{Max error (rad)} \\
+    \midrule
+    Scaled series ($N=20$) & $0.1$ & $9.62 \times 10^{-15}$ \\
+    RK4 & $0.1$ & $9.19 \times 10^{-4}$ \\
+    RK4 & $0.01$ & $9.42 \times 10^{-8}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The scaled-series result demonstrates agreement with the matrix exponential after a fixed precomputation.  It does not imply general superiority over Runge--Kutta methods, which are designed for a broader class of nonlinear and nonautonomous problems.
 
 \section{Discussion: Possible Nonlinear Extension as Future Work}
 \label{sec:future-nonlinear}
 
-Although the present work focuses on the linear regime, the operator architecture naturally suggests a path toward a nonlinear extension. For completeness, we briefly outline how the same matrix exponential kernel could be used to incorporate nonlinearities via Picard successive approximations. This discussion is not a full nonlinear solver; it merely demonstrates that the framework is extensible. A rigorous nonlinear treatment is left for future research.
+Although the present work focuses on the linear regime, the variation-of-constants formula identifies how the same matrix-exponential kernel enters nonlinear exponential integrators.  The following representation is included only to delimit a possible extension; it is not proposed as a competitive nonlinear solver.  A rigorous implementation and comparison with modern exponential integrators~\cite{hochbruck2010exponential} are left for future research.
 
 \subsection{Nonlinear Residual}
 
@@ -438,13 +474,16 @@ The full nonlinear dynamics can be written as
 \begin{equation}
 \dot{\Rstate} = \A \Rstate + \mathbf{f}(\Rstate),
 \end{equation}
-where $\mathbf{f}(\Rstate)$ collects all terms omitted during linearization.  Using the explicit formulas from Section~\ref{sec:structural}, we have
+where $\mathbf{f}(\Rstate)$ collects all terms omitted during linearization. Let $\M_0=\M(\mathbf{0})$, so that the lower block of $\A\Rstate$ is $-\M_0^{-1}\K\boldsymbol{\theta}$.  The exact nonlinear acceleration is $-\M(\boldsymbol{\theta})^{-1}[\mathbf{c}(\boldsymbol{\theta},\dot{\boldsymbol{\theta}})+\mathbf{g}(\boldsymbol{\theta})]$; therefore
 \[
 \mathbf{f}(\Rstate) = \begin{pmatrix} \mathbf{0} \\
-\M^{-1}\bigl[ \mathbf{c}(\boldsymbol{\theta},\dot{\boldsymbol{\theta}})
-+ \mathbf{g}_{\text{nl}}(\boldsymbol{\theta}) \bigr] \end{pmatrix},
+-\M(\boldsymbol{\theta})^{-1}
+\bigl[\mathbf{c}(\boldsymbol{\theta},\dot{\boldsymbol{\theta}})
++\mathbf{g}(\boldsymbol{\theta})\bigr]
++\M_0^{-1}\K\boldsymbol{\theta}
+\end{pmatrix}.
 \]
-with $\mathbf{c}$ the centrifugal/Coriolis vector and $\mathbf{g}_{\text{nl}}(\boldsymbol{\theta})$ containing the nonlinear parts of the gravitational torque. Importantly, the same cumulative mass‑sum rule (Eq.~\ref{eq:prefix-sum}) determines each coefficient in $\mathbf{f}$.
+This expression includes both the nonlinear gravity and the angle dependence of the mass matrix, with the sign fixed by the original equation $\M(\boldsymbol{\theta})\ddot{\boldsymbol{\theta}}+\mathbf{c}+\mathbf{g}=\mathbf{0}$. Importantly, the same cumulative mass-sum rule (Eq.~\ref{eq:prefix-sum}) determines each coefficient in $\mathbf{f}$.
 
 \subsection{Picard Iteration Scheme}
 
@@ -452,33 +491,33 @@ The corresponding nonlinear Volterra equation is
 \begin{equation}
 \Rstate(t) = e^{\A t}\Rstate(0) + \int_0^t e^{\A(t-s)} \mathbf{f}\bigl(\Rstate(s)\bigr)\,ds.
 \end{equation}
-Picard iterations,
+Formal Picard iterations,
 \begin{equation}\label{eq:picard}
   \Rstate^{(m+1)}(t) = e^{\A t}\Rstate(0)
   + \int_0^t e^{\A(t-s)} \mathbf{f}\bigl(\Rstate^{(m)}(s)\bigr)\,ds,
 \end{equation}
-starting from the linear solution $\Rstate^{(0)}(t) = e^{\A t}\Rstate(0)$, provide a constructive way to improve the approximation locally in time.
+starting from the linear solution $\Rstate^{(0)}(t) = e^{\A t}\Rstate(0)$, provide a local fixed-point construction.  They are stated here to expose the integral structure, not as the recommended numerical method.
 
 \subsection{Limitations and Future Work}
 
-The Picard approach is known to converge only locally (for sufficiently small time intervals or weak nonlinearities). A full nonlinear implementation would require adaptive step-size control, error estimation, and possibly acceleration techniques (e.g., Krylov subspace methods). These aspects are beyond the scope of this paper, which focuses on the linear regime. We therefore relegate a complete nonlinear treatment to future work, where the operator kernel developed here will serve as the foundation.
+Picard iteration converges only locally under the usual contraction assumptions and, in this bare form, lacks adaptive step-size control and error estimation.  Modern exponential integrators provide more appropriate discretizations of the variation-of-constants formula~\cite{hochbruck2010exponential}.  Their implementation and evaluation are beyond the present paper, which makes no numerical-performance claim for the nonlinear case.
 
 \section{Conclusions}
 
-This work presented a unified structural generation and operator-based propagation framework for the \emph{linear} $n$-mass pendulum.  The core contribution is the explicit formulation and systematic use of the cumulative mass-sum rule (Eq.~\ref{eq:prefix-sum}) as an organizing principle, which enables algorithmic matrix assembly without manual symbolic overhead.  The linearized system is propagated using the matrix exponential implemented via a truncated Peano-Baker series, achieving machine-precision agreement with overall quadratic assembly complexity for the linearized operators. Moreover, because the transition matrix is constant, it can be precomputed once and reused across many simulations, offering practical advantages for parameter studies and control applications.
+This work presented a unified structural generation and solution framework for the \emph{linear} $n$-mass pendulum.  The core contribution is the explicit formulation and systematic use of the cumulative mass-sum rule (Eq.~\ref{eq:prefix-sum}) as an organizing principle.  Precomputing the suffix masses makes the linear matrix assembly genuinely quadratic.  The standard generalized-eigenvalue solution and a scaled-and-squared matrix-exponential implementation agree with \texttt{scipy.linalg.expm} to double-precision round-off in the tested cases. Because the transition matrix is constant, it can be precomputed once and reused across many simulations.
 
-A brief discussion indicated how the same operator architecture could be extended to weakly nonlinear regimes using Picard iterations, but a complete nonlinear solver is left as future work. The framework's value lies in its pedagogical transparency and explicit structural mapping, making it suitable for educational purposes, control design, and parameter estimation tasks where explicit linear matrices are advantageous.
+The exact nonlinear sign was independently checked through energy conservation for the double pendulum.  A complete nonlinear exponential integrator is left as future work. The framework's value lies in its pedagogical transparency and explicit structural mapping, making it suitable for educational purposes, control design, and parameter estimation tasks where explicit linear matrices are advantageous.
 
 \subsection*{Code Availability}
 
-The complete Python implementation is available upon publication.  For review purposes, the core code is provided in Appendix~\ref{app:python}.
+The source code, validation scripts, generated figures, and revised PDF accompany this contribution.  The core implementation is also reproduced in Appendix~\ref{app:python}.
 
-The reference implementation and validation scripts are publicly archived at Zenodo:
-\doi{10.5281/zenodo.20102180}
+The stable archival record is available through the Zenodo concept DOI:
+\doi{10.5281/zenodo.20102179}
 
 \subsection*{Licensing}
 
-This manuscript is distributed under the Creative Commons Attribution 4.0 International License (CC BY 4.0). A copy of the license is available at \url{https://creativecommons.org/licenses/by/4.0/}.
+This contribution is distributed under the Creative Commons Attribution 4.0 International License (CC BY 4.0). A copy of the license is available at \url{https://creativecommons.org/licenses/by/4.0/}.
 
 \appendix
 \section{Core Python Implementation}
@@ -486,34 +525,46 @@ This manuscript is distributed under the Creative Commons Attribution 4.0 Intern
 
 \begin{lstlisting}[caption={Core implementation of linear matrix assembly and propagation.}, label=lst:python]
 import numpy as np
-from math import factorial
 
 def assemble_system(masses, lengths, g=9.81):
-    """Linear mass matrix M and stiffness matrix K via cumulative mass-sum rule."""
+    """Assemble A, M, and K using precomputed suffix masses."""
+    masses = np.asarray(masses, dtype=float)
+    lengths = np.asarray(lengths, dtype=float)
     n = len(masses)
+    S = np.cumsum(masses[::-1])[::-1]
     M = np.zeros((n, n))
     K = np.zeros((n, n))
     for j in range(n):
         for k in range(n):
-            M[j, k] = np.sum(masses[max(j, k):]) * lengths[j] * lengths[k]
-        K[j, j] = np.sum(masses[j:]) * g * lengths[j]
-    return M, K
+            M[j, k] = S[max(j, k)] * lengths[j] * lengths[k]
+        K[j, j] = S[j] * g * lengths[j]
+    A = np.block([
+        [np.zeros((n, n)), np.eye(n)],
+        [-np.linalg.solve(M, K), np.zeros((n, n))]
+    ])
+    return A, M, K
 
-def peano_baker_step(A, dt, N=20):
-    """Transition matrix Phi(dt) = sum_{k=0}^N (A*dt)^k/k!"""
+def peano_baker_step(A, dt, N=20, eta=0.5):
+    """Scaled-and-squared Taylor/Peano--Baker approximation."""
+    B = A * dt
+    norm_B = np.linalg.norm(B, ord=np.inf)
+    s = 0 if norm_B <= eta else int(np.ceil(np.log2(norm_B / eta)))
+    B = B / (2**s)
     dim = A.shape[0]
     Phi = np.eye(dim)
-    A_pow = np.eye(dim)
+    term = np.eye(dim)
     for k in range(1, N + 1):
-        A_pow = A_pow @ A
-        Phi += (dt**k / factorial(k)) * A_pow
+        term = (term @ B) / k
+        Phi += term
+    for _ in range(s):
+        Phi = Phi @ Phi
     return Phi
 
-def propagate_linear(R0, Phi, n_steps):
+def propagate_linear(Phi, R0, t):
     """Propagate linear system using precomputed transition matrix."""
-    R = np.zeros((n_steps + 1, len(R0)))
+    R = np.zeros((len(t), len(R0)))
     R[0] = R0
-    for i in range(1, n_steps + 1):
+    for i in range(1, len(t)):
         R[i] = Phi @ R[i-1]
     return R
 
@@ -598,6 +649,15 @@ def propagate_linear(R0, Phi, n_steps):
   \textit{Theoretical Numerical Analysis},
   3rd ed., Springer (2009).
   \doi{10.1007/978-1-4419-0458-4}
+
+\bibitem{moler2003dubious}
+  Moler, C., Van Loan, C., Nineteen dubious ways to compute the
+  exponential of a matrix, twenty-five years later,
+  \textit{SIAM Review} \textbf{45}(1) (2003) 3--49.
+
+\bibitem{hochbruck2010exponential}
+  Hochbruck, M., Ostermann, A., Exponential integrators,
+  \textit{Acta Numerica} \textbf{19} (2010) 209--286.
 
 \end{thebibliography}
 

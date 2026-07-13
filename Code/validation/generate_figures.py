@@ -1,19 +1,24 @@
 #!/usr/bin/env python
 """
-Generate figures for the linear framework manuscript.
+Generate figures for the linear framework contribution.
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
+from pathlib import Path
 from scipy.linalg import expm
 
-sys.path.append('.')
+CODE_DIR = Path(__file__).resolve().parents[1]
+if str(CODE_DIR) not in sys.path:
+    sys.path.insert(0, str(CODE_DIR))
+
 from src.assembly import assemble_system
 from src.propagator import propagate_linear, peano_baker_step
 
-os.makedirs('figures', exist_ok=True)
+FIGURES_DIR = CODE_DIR / 'figures'
+FIGURES_DIR.mkdir(exist_ok=True)
 
 plt.rcParams.update({
     'font.size': 10,
@@ -33,9 +38,9 @@ def fig_linear_validation():
     
     cases = [
         {'n': 2, 'type': 'uniform',     'm': [1.0]*2,           'l': [1.0]*2,           'R0': [0.1, 0.05, 0.0, 0.0]},
-        {'n': 3, 'type': 'uniform',     'm': [1.0]*3,           'l': [1.0]*3,           'R0': [0.1, 0.08, 0.05, 0.0, 0.0, 0.0]},
-        {'n': 3, 'type': 'non-uniform', 'm': [1.0, 0.5, 0.2],   'l': [1.0, 0.8, 0.5],   'R0': [0.1, 0.08, 0.05, 0.0, 0.0, 0.0]},
-        {'n': 5, 'type': 'uniform',     'm': [1.0]*5,           'l': [1.0]*5,           'R0': [0.1, 0.08, 0.05, 0.03, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0]}
+        {'n': 3, 'type': 'uniform',     'm': [1.0]*3,           'l': [1.0]*3,           'R0': [0.1, 0.05, 0.02, 0.0, 0.0, 0.0]},
+        {'n': 3, 'type': 'non-uniform', 'm': [2.0, 1.5, 0.8],   'l': [1.2, 0.9, 0.6],   'R0': [0.1, 0.05, 0.02, 0.0, 0.0, 0.0]},
+        {'n': 5, 'type': 'uniform',     'm': [1.0]*5,           'l': [1.0]*5,           'R0': [0.1, 0.05, 0.02, 0.01, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0]}
     ]
     
     fig, axes = plt.subplots(4, 2, figsize=(10, 12))
@@ -59,7 +64,7 @@ def fig_linear_validation():
         
         # Trajectory Plot
         axes[idx, 0].plot(t, R_ref[:, 0], 'k-', lw=2, label='Matrix Exp (Ref)', alpha=0.7)
-        axes[idx, 0].plot(t, R_vol[:, 0], 'r--', lw=1.5, label='Peano-Baker')
+        axes[idx, 0].plot(t, R_vol[:, 0], 'r--', lw=1.5, label='Scaled series')
         axes[idx, 0].set_ylabel('θ₁ (rad)')
         axes[idx, 0].set_title(f"{title_prefix}: Linear Trajectory")
         axes[idx, 0].legend()
@@ -76,7 +81,7 @@ def fig_linear_validation():
             axes[idx, 1].set_xlabel('t (s)')
 
     plt.tight_layout()
-    plt.savefig('figures/linear_validation.png', bbox_inches='tight')
+    plt.savefig(FIGURES_DIR / 'linear_validation.png', bbox_inches='tight')
     plt.close(fig)
     print("Generated figures/linear_validation.png")
 

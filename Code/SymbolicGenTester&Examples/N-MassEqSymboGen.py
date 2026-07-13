@@ -59,6 +59,8 @@ for d in range(1, n + 1):
 
     # ---------------------------------------------------
     # Centrifugal / nonlinear coupling terms
+    # The sign is fully determined by sin(theta_d-theta_k).
+    # No additional d/k-dependent sign factor is required.
     # ---------------------------------------------------
     for k in range(1, n + 1):
 

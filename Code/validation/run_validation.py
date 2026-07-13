@@ -1,126 +1,213 @@
-#!/usr/bin/env python
-"""
-Run all numerical validations for the linear framework
-and print tables exactly as in the manuscript.
-"""
+#!/usr/bin/env python3
+"""Run the numerical validations reported in the contribution."""
+
+from pathlib import Path
+import sys
 
 import numpy as np
-import time as tm
-import sys
+from scipy.integrate import solve_ivp
 from scipy.linalg import expm
 
-sys.path.append('.')
-from src.assembly import assemble_system
-from src.propagator import propagate_linear, peano_baker_step
+CODE_DIR = Path(__file__).resolve().parents[1]
+if str(CODE_DIR) not in sys.path:
+    sys.path.insert(0, str(CODE_DIR))
 
-def symbolic_scaling_table():
-    print("\n" + "="*70)
-    print("TABLA 1: Symbolic generation scaling")
-    print("="*70)
-    print(f"{'n':<6} {'Generation time (s)':<22} {'Number of terms':<18} {'O(n²) scaling':<15}")
-    print("-" * 70)
-    
+from src.assembly import assemble_system
+from src.modal import solve_modal
+from src.nonlinear import nonlinear_terms, state_derivative, total_energy
+from src.propagator import peano_baker_step, propagate_linear
+
+
+CASES = [
+    {
+        "n": 2,
+        "type": "uniform",
+        "m": [1.0] * 2,
+        "l": [1.0] * 2,
+        "R0": [0.1, 0.05, 0.0, 0.0],
+    },
+    {
+        "n": 3,
+        "type": "uniform",
+        "m": [1.0] * 3,
+        "l": [1.0] * 3,
+        "R0": [0.1, 0.05, 0.02, 0.0, 0.0, 0.0],
+    },
+    {
+        "n": 3,
+        "type": "non-uniform",
+        "m": [2.0, 1.5, 0.8],
+        "l": [1.2, 0.9, 0.6],
+        "R0": [0.1, 0.05, 0.02, 0.0, 0.0, 0.0],
+    },
+    {
+        "n": 5,
+        "type": "uniform",
+        "m": [1.0] * 5,
+        "l": [1.0] * 5,
+        "R0": [0.1, 0.05, 0.02, 0.01, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0],
+    },
+]
+
+
+def structural_scaling_table():
+    print("\n" + "=" * 64)
+    print("TABLE 1: Linear matrix assembly structure")
+    print("=" * 64)
+    print(f"{'n':<6} {'M entries':<14} {'K entries':<14} {'Total':<14}")
+    print("-" * 64)
+
     for n in [2, 4, 6, 8, 10]:
-        masses, lengths = [1.0]*n, [1.0]*n
-        start = tm.perf_counter()
-        assemble_system(masses, lengths)
-        elapsed = tm.perf_counter() - start
-        
-        terms = 2 * n**2 + 3 * n + 1
-        print(f"{n:<6} {elapsed:.4f}                 {terms:<18} {n**2:<15}")
+        print(f"{n:<6} {n**2:<14} {n:<14} {n**2 + n:<14}")
+
 
 def linear_validation_table():
-    print("\n" + "="*80)
-    print("TABLA 2: Maximum absolute error in θ₁(t) over t∈[0,8] s")
-    print("="*80)
-    print(f"{'System':<12} {'Parameters':<12} {'State dim.':<12} {'Δt (s)':<10} {'Max error (rad)':<15}")
-    print("-" * 80)
+    print("\n" + "=" * 94)
+    print("TABLE 2: Maximum error in theta_1(t) over t in [0, 8] s")
+    print("=" * 94)
+    print(
+        f"{'System':<12} {'Parameters':<14} {'dt (s)':<10} "
+        f"{'Series vs expm':<20} {'Modal vs expm':<20}"
+    )
+    print("-" * 94)
 
-    t = np.linspace(0, 8, 801)
-    g = 9.81
+    t = np.linspace(0.0, 8.0, 801)
     dt = 0.01
 
-    cases = [
-        {'n': 2, 'type': 'uniform',     'm': [1.0]*2,           'l': [1.0]*2,           'R0': [0.1, 0.05, 0.0, 0.0]},
-        {'n': 3, 'type': 'uniform',     'm': [1.0]*3,           'l': [1.0]*3,           'R0': [0.1, 0.05, 0.02, 0.0, 0.0, 0.0]},
-        {'n': 3, 'type': 'non-uniform', 'm': [2.0, 1.5, 0.8],   'l': [1.2, 0.9, 0.6],   'R0': [0.1, 0.05, 0.02, 0.0, 0.0, 0.0]},
-        {'n': 5, 'type': 'uniform',     'm': [1.0]*5,           'l': [1.0]*5,           'R0': [0.1, 0.05, 0.02, 0.01, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0]}
-    ]
+    for case in CASES:
+        A, M, K = assemble_system(case["m"], case["l"])
+        R0 = np.asarray(case["R0"], dtype=float)
 
-    for case in cases:
-        A, _, _ = assemble_system(case['m'], case['l'], g)
-        R0 = np.array(case['R0'])
-        
-        # 1. Calcular Phi
         Phi = peano_baker_step(A, dt, N=20)
-        # 2. Propagar
-        R_vol = propagate_linear(Phi, R0, t)
-        
-        R_expm = np.zeros_like(R_vol)
-        for i, ti in enumerate(t):
-            R_expm[i] = expm(A * ti) @ R0
-            
-        err = np.max(np.abs(R_vol[:, 0] - R_expm[:, 0])) 
-        print(f"n={case['n']:<10} {case['type']:<12} {2*case['n']:<12} {dt:<10} {err:.2e}")
+        R_series = propagate_linear(Phi, R0, t)
+        R_modal = solve_modal(M, K, R0, t)
+        R_expm = np.asarray([expm(A * ti) @ R0 for ti in t])
+
+        series_error = np.max(np.abs(R_series[:, 0] - R_expm[:, 0]))
+        modal_error = np.max(np.abs(R_modal[:, 0] - R_expm[:, 0]))
+        print(
+            f"n={case['n']:<10} {case['type']:<14} {dt:<10.2f} "
+            f"{series_error:<20.2e} {modal_error:<20.2e}"
+        )
+
+        if series_error > 5e-13 or modal_error > 5e-13:
+            raise AssertionError("linear validation exceeded its error tolerance")
+
 
 def runge_kutta_comparison_table():
-    print("\n" + "="*80)
-    print("TABLA 3: Comparison of Peano-Baker and RK4 for n=3 non-uniform (linear regime)")
-    print("="*80)
-    print(f"{'Method':<25} {'Δt (s)':<10} {'Max error (rad)':<20} {'Time (s)':<12}")
-    print("-" * 80)
+    print("\n" + "=" * 72)
+    print("TABLE 3: Discrete propagator consistency for n=3 non-uniform")
+    print("=" * 72)
+    print(f"{'Method':<28} {'dt (s)':<12} {'Max error (rad)':<20}")
+    print("-" * 72)
 
-    g = 9.81
     masses = [2.0, 1.5, 0.8]
     lengths = [1.2, 0.9, 0.6]
     R0 = np.array([0.1, 0.05, 0.02, 0.0, 0.0, 0.0])
-    A, _, _ = assemble_system(masses, lengths, g)
+    A, _, _ = assemble_system(masses, lengths)
 
-    def exact_solution(t_val):
-        return expm(A * t_val) @ R0
+    def exact_solution(t_value):
+        return expm(A * t_value) @ R0
 
-    def rk4_step(A_mat, y, dt_val):
-        k1 = A_mat @ y
-        k2 = A_mat @ (y + dt_val/2 * k1)
-        k3 = A_mat @ (y + dt_val/2 * k2)
-        k4 = A_mat @ (y + dt_val * k3)
-        return y + dt_val/6 * (k1 + 2*k2 + 2*k3 + k4)
+    def rk4_step(y, dt_value):
+        k1 = A @ y
+        k2 = A @ (y + dt_value / 2 * k1)
+        k3 = A @ (y + dt_value / 2 * k2)
+        k4 = A @ (y + dt_value * k3)
+        return y + dt_value / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
 
-    # 1. Peano-Baker dt = 0.1
-    t_01 = np.linspace(0, 8, 81)
-    start = tm.perf_counter()
-    Phi_01 = peano_baker_step(A, 0.1, N=20)
-    R_pb = propagate_linear(Phi_01, R0, t_01)
-    time_pb = tm.perf_counter() - start
-    err_pb = np.max(np.abs(R_pb[:, 0] - np.array([exact_solution(ti)[0] for ti in t_01])))
-    print(f"{'Peano-Baker (N=20)':<25} {'0.1':<10} {err_pb:.1e}             {time_pb:.4f}")
+    for method, dt in [("Scaled series (N=20)", 0.1), ("RK4", 0.1), ("RK4", 0.01)]:
+        t = np.arange(0.0, 8.0 + dt / 2, dt)
+        states = np.zeros((len(t), len(R0)))
+        states[0] = R0
 
-    # 2. RK4 dt = 0.1
-    start = tm.perf_counter()
-    R_rk4_1 = np.zeros((len(t_01), len(R0)))
-    R_rk4_1[0] = R0
-    for i in range(1, len(t_01)):
-        R_rk4_1[i] = rk4_step(A, R_rk4_1[i-1], 0.1)
-    time_rk4_1 = tm.perf_counter() - start
-    err_rk4_1 = np.max(np.abs(R_rk4_1[:, 0] - np.array([exact_solution(ti)[0] for ti in t_01])))
-    print(f"{'RK4':<25} {'0.1':<10} {err_rk4_1:.1e}             {time_rk4_1:.4f}")
+        if method.startswith("Scaled"):
+            Phi = peano_baker_step(A, dt, N=20)
+            states = propagate_linear(Phi, R0, t)
+        else:
+            for index in range(1, len(t)):
+                states[index] = rk4_step(states[index - 1], dt)
 
-    # 3. RK4 dt = 0.01
-    t_001 = np.linspace(0, 8, 801)
-    start = tm.perf_counter()
-    R_rk4_2 = np.zeros((len(t_001), len(R0)))
-    R_rk4_2[0] = R0
-    for i in range(1, len(t_001)):
-        R_rk4_2[i] = rk4_step(A, R_rk4_2[i-1], 0.01)
-    time_rk4_2 = tm.perf_counter() - start
-    err_rk4_2 = np.max(np.abs(R_rk4_2[:, 0] - np.array([exact_solution(ti)[0] for ti in t_001])))
-    print(f"{'RK4':<25} {'0.01':<10} {err_rk4_2:.1e}             {time_rk4_2:.4f}")
+        reference = np.asarray([exact_solution(ti) for ti in t])
+        error = np.max(np.abs(states[:, 0] - reference[:, 0]))
+        print(f"{method:<28} {dt:<12.2f} {error:<20.2e}")
+
+
+def nonlinear_energy_validation():
+    """Reproduce the reviewer's double-pendulum energy test."""
+    print("\n" + "=" * 72)
+    print("TABLE 4: Corrected nonlinear double-pendulum energy balance")
+    print("=" * 72)
+
+    masses = np.ones(2)
+    lengths = np.ones(2)
+    initial_state = np.array([np.deg2rad(5.0), 0.0, 0.0, 0.0])
+    times = np.linspace(0.0, 6.0, 601)
+
+    def flawed_state_derivative(_time, state, masses_value, lengths_value, g):
+        """Former piecewise-sign equation, retained only as a regression check."""
+        theta = state[:2]
+        velocity = state[2:]
+        M, _, gravity = nonlinear_terms(
+            theta, velocity, masses_value, lengths_value, g
+        )
+        suffix_masses = np.cumsum(masses_value[::-1])[::-1]
+        flawed_c = np.zeros(2)
+        for d in range(2):
+            for k in range(2):
+                coefficient = (
+                    suffix_masses[max(d, k)]
+                    * lengths_value[d]
+                    * lengths_value[k]
+                )
+                sign = 1.0 if d <= k else -1.0
+                flawed_c[d] += (
+                    coefficient
+                    * velocity[k] ** 2
+                    * np.sin(theta[d] - theta[k])
+                    * sign
+                )
+        acceleration = np.linalg.solve(M, -(flawed_c + gravity))
+        return np.concatenate((velocity, acceleration))
+
+    drifts = {}
+    for label, derivative in [
+        ("Corrected equation", state_derivative),
+        ("Former piecewise sign", flawed_state_derivative),
+    ]:
+        solution = solve_ivp(
+            derivative,
+            (times[0], times[-1]),
+            initial_state,
+            args=(masses, lengths, 9.81),
+            method="DOP853",
+            t_eval=times,
+            rtol=1e-12,
+            atol=1e-14,
+            max_step=0.01,
+        )
+        if not solution.success:
+            raise RuntimeError(solution.message)
+
+        energy = np.asarray(
+            [total_energy(state, masses, lengths) for state in solution.y.T]
+        )
+        drifts[label] = np.max(np.abs(energy - energy[0]))
+        print(f"{label:<24}: {drifts[label]:.3e}")
+
+    if drifts["Corrected equation"] > 1e-10:
+        raise AssertionError("corrected nonlinear equations do not conserve energy")
+    if drifts["Former piecewise sign"] < 1e-6:
+        raise AssertionError("energy regression check did not detect the old sign error")
+
 
 def main():
-    symbolic_scaling_table()
+    structural_scaling_table()
     linear_validation_table()
     runge_kutta_comparison_table()
-    print("\nSimulaciones lineales completadas exitosamente.")
+    nonlinear_energy_validation()
+    print("\nAll validations completed successfully.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
