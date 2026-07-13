@@ -1,6 +1,6 @@
 # A Unified Structural and Operator Framework for the Linear n-Mass Pendulum
 
-This repository contains the reference Python implementation accompanying the manuscript:
+This repository contains the paper, figures, and reference Python implementation as an independent open contribution:
 
 > **A Unified Structural and Operator Framework for the Linear n-Mass Pendulum**
 
@@ -48,9 +48,11 @@ REPOSITORY PAPER/
 │   │
 │   ├── figures/
 │   │
-│   ├── Main.tex
-│   │
-│   └── RodriguezArias_ArellanoGonzalez_UnifiedFramework_NMassPendulum_JTCAM.pdf.pdf
+│   └── Main.tex
+│
+├── output/
+│   └── pdf/
+│       └── Unified_n_Mass_Pendulum_revised.pdf
 │
 ├── .gitignore
 │
@@ -111,7 +113,7 @@ $\sin(\theta_d-\theta_k)$ without an additional index-dependent sign.
 
 ## `validation/run_validation.py`
 
-Reproduces the numerical tables from the manuscript:
+Reproduces the numerical tables from the contribution:
 
 * Structural scaling benchmarks
 * Linear propagation validation against `scipy.linalg.expm` and modal decoupling
@@ -122,7 +124,7 @@ Reproduces the numerical tables from the manuscript:
 
 ## `validation/generate_figures.py`
 
-Generates manuscript figures, including:
+Generates the contribution figures, including:
 
 * Time-domain trajectory comparisons
 * Absolute propagation error plots
@@ -163,7 +165,7 @@ python Code/validation/generate_figures.py
 
 # Reproducibility
 
-The repository is designed to reproduce the numerical experiments reported in the manuscript.
+The repository is designed to reproduce the numerical experiments reported in the contribution.
 
 Reference solutions use:
 
@@ -188,7 +190,5 @@ If you use this repository, please cite:
 Rodríguez Arias, Y. A., & Arellano González, S.
 "A Unified Structural and Operator Framework for the Linear n-Mass Pendulum"
 
-Concept DOI: https://doi.org/10.5281/zenodo.20102179
-
-Version DOI used by the manuscript: https://doi.org/10.5281/zenodo.20102180
+Stable Zenodo concept DOI: https://doi.org/10.5281/zenodo.20102179
 

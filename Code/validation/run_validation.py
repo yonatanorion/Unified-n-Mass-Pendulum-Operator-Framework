@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the numerical validations reported in the manuscript."""
+"""Run the numerical validations reported in the contribution."""
 
 from pathlib import Path
 import sys

@@ -1,6 +1,6 @@
 # Equation of Motion Generator for an \(n\)-Mass Pendulum
 
-Python program that uses :contentReference[oaicite:0]{index=0} to symbolically derive the equations of motion for a multiple pendulum system composed of \(n\) coupled masses.
+Python program that uses SymPy to symbolically derive the equations of motion for a multiple pendulum system composed of \(n\) coupled masses.
 
 The script automatically generates a **Markdown + LaTeX** file ready to be rendered in:
 
@@ -133,12 +133,7 @@ and automatically written into a `.md` file.
 
 # MathJax Compatibility
 
-The generated Markdown file can be directly rendered on MathJax-compatible platforms such as:
-
-- :contentReference[oaicite:1]{index=1}
-- :contentReference[oaicite:2]{index=2}
-- :contentReference[oaicite:3]{index=3}
-- :contentReference[oaicite:4]{index=4}
+The generated Markdown file can be directly rendered on MathJax-compatible platforms such as Jupyter, Quarto, Obsidian, Typora, and MkDocs.
 
 # License
 
@@ -152,4 +147,4 @@ If you use this repository, please cite:
 
 Rodríguez Arias, Y. A., & Arellano González, S. "A Unified Structural and Operator Framework for the Linear n-Mass Pendulum"
 
-DOI: https://zenodo.org/records/20102180 The reference implementation and validation scripts are publicly archived at Zenodo:
+Stable Zenodo concept DOI: https://doi.org/10.5281/zenodo.20102179

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Generate figures for the linear framework manuscript.
+Generate figures for the linear framework contribution.
 """
 
 import numpy as np
