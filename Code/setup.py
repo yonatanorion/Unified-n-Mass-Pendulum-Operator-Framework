@@ -5,13 +5,10 @@ ROOT = Path(__file__).resolve().parent
 
 setup(
     name="n-mass-pendulum-framework",
-    version="1.0.0",
+    version="1.2.0",
     author="Yonatan Ali Rodríguez Arias, Sandra Arellano González",
     description="A Unified Structural and Operator Framework for the Linear $n$-Mass Pendulum",
     long_description=(ROOT.parent / "README.md").read_text(encoding="utf-8"),
-    long_description_content_type="text/markdown",
-    packages=find_packages(),
-    install_requires=[
         "numpy>=1.21.0",
         "scipy>=1.7.0",
         "matplotlib>=3.4.0",

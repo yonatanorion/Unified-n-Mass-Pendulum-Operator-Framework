@@ -1,61 +1,93 @@
 # A Unified Structural and Operator Framework for the Linear n-Mass Pendulum
 
-This repository contains the paper, figures, and reference Python implementation as an independent open contribution:
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20102179.svg)](https://doi.org/10.5281/zenodo.20102179)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python: 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
 
-> **A Unified Structural and Operator Framework for the Linear n-Mass Pendulum**
+This repository contains the scientific paper, figures, and reference Python implementation for:
+
+> **A Unified Structural and Operator Framework for the Linear $n$-Mass Pendulum**  
+> *Yonatan Ali Rodríguez Arias & Sandra Arellano González*
 
 The project presents:
 
-* Structural matrix assembly via the **cumulative mass-sum rule**
-* Linear state-space generation for arbitrary (n)-mass pendulums
-* Standard modal decoupling through a generalized eigenvalue problem
-* Operator-based propagation using a scaled-and-squared **Peano-Baker/Taylor series**
-* Numerical validation against the exact matrix exponential
-* A nonlinear double-pendulum energy check for the corrected coupling sign
+* **Direct Structural Matrix Assembly:** $\mathcal{O}(n^2)$ formulation via the **cumulative mass-sum rule** ($S_j = \sum_{i=j}^n m_i$).
+* **Linear State-Space Generation:** Compact first-order formulation $\dot{\mathbf{R}} = \mathcal{A}\mathbf{R}$ with diagonal gravitational stiffness.
+* **Exact Modal Decoupling:** Generalized eigenvalue solution ($\mathbf{K}\mathbf{U} = \mathbf{M}\mathbf{U}\mathbf{\Omega}^2$) providing a reference baseline.
+* **Operator-Based Linear Propagation:** Scaled-and-squared **Peano-Baker / Taylor series** approximation for the discrete transition matrix $\Phi(\Delta t) = e^{\mathcal{A}\Delta t}$.
+* **Rigorous Numerical Validation:** Concordance to double-precision machine epsilon ($\sim 10^{-15}$ rad) against `scipy.linalg.expm` and modal solutions.
+* **Nonlinear Double-Pendulum Energy Check:** Numerical validation confirming the corrected coupling sign $\sin(\theta_d - \theta_k)$ and energy conservation.
+
+---
+
+# Quickstart
+
+```python
+import numpy as np
+from src.assembly import assemble_system
+from src.propagator import peano_baker_step, propagate_linear
+
+# 1. Define n-mass pendulum parameters (e.g., n = 3)
+masses = [2.0, 1.5, 0.8]   # kg
+lengths = [1.2, 0.9, 0.6]  # m
+
+# 2. Assemble system matrices in O(n^2)
+A, M, K = assemble_system(masses, lengths)
+
+# 3. Precompute discrete-time transition operator
+dt = 0.01  # s
+Phi = peano_baker_step(A, dt, N=20)
+
+# 4. Propagate linear dynamics from initial displacement
+t = np.arange(0, 10.0 + dt, dt)
+R0 = np.array([0.1, 0.05, 0.02, 0.0, 0.0, 0.0])  # [theta0, omega0]
+trajectory = propagate_linear(Phi, R0, t)
+
+print(f"Simulated {len(t)} time steps with shape: {trajectory.shape}")
+```
 
 ---
 
 # Repository Structure
 
 ```text
-REPOSITORY PAPER/
-│
+.
 ├── Code/
-│   │
 │   ├── figures/
 │   │   └── linear_validation.png
-│   │
 │   ├── src/
 │   │   ├── __init__.py
 │   │   ├── assembly.py
 │   │   ├── modal.py
 │   │   ├── nonlinear.py
 │   │   └── propagator.py
-│   │
 │   ├── SymbolicGenTester&Examples/
 │   │   ├── N-MassEqSymboGen.py
 │   │   ├── Output_Equations_pendulum_5_masses.md
 │   │   ├── Output_Equations_pendulum_5_masses.pdf
 │   │   └── README.md
-│   │
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   ├── test_assembly.py
+│   │   ├── test_modal.py
+│   │   ├── test_nonlinear.py
+│   │   └── test_propagator.py
 │   ├── validation/
 │   │   ├── generate_figures.py
 │   │   └── run_validation.py
-│   │
 │   └── setup.py
-│
 ├── Paper/
-│   │
 │   ├── figures/
-│   │
-│   └── Main.tex
-│
+│   │   ├── 4mass_pendulum.png
+│   │   ├── linear_validation.png
+│   │   └── n_mass_pendulum.png
+│   ├── Main.tex
+│   └── Main.pdf
 ├── output/
 │   └── pdf/
 │       └── Unified_n_Mass_Pendulum_revised.pdf
-│
-├── .gitignore
-│
+├── pyproject.toml
+├── LICENSE
 └── README.md
 ```
 
@@ -66,19 +98,14 @@ REPOSITORY PAPER/
 ## `src/assembly.py`
 
 Implements the linear matrix assembly using the cumulative mass-sum rule:
-
-* Mass matrix (M)
-* Gravitational stiffness matrix (K)
-* State-space operator (A)
+* Mass matrix ($\mathbf{M}$)
+* Diagonal gravitational stiffness matrix ($\mathbf{K}$)
+* State-space operator ($\mathcal{A}$)
 
 Core formulation:
 
 $$
-M_{jk} =
-\left(
-\sum_{i=\max(j,k)}^n m_i
-\right)
-l_j l_k
+M_{jk} = \left(\sum_{i=\max(j,k)}^n m_i\right) l_j l_k, \qquad K_{jj} = \left(\sum_{i=j}^n m_i\right) g l_j
 $$
 
 ---
@@ -88,74 +115,67 @@ $$
 Implements operator-based linear propagation using a scaled-and-squared Peano-Baker/Taylor expansion:
 
 $$
-B=\frac{A\Delta t}{2^s}, \qquad
-\Phi(\Delta t)\approx
-\left(\sum_{k=0}^{N}\frac{B^k}{k!}\right)^{2^s}
+\mathbf{B} = \frac{\mathcal{A}\Delta t}{2^s}, \qquad \Phi(\Delta t) \approx \left(\sum_{k=0}^{N}\frac{\mathbf{B}^k}{k!}\right)^{2^s}
 $$
 
-Scaling controls the truncation error when $\lVert A\Delta t\rVert$ is not small. The transition matrix is precomputed once and reused efficiently across simulations.
+Scaling controls truncation error when $\|\mathcal{A}\Delta t\|$ is large. The transition matrix $\Phi(\Delta t)$ is computed once and reused across simulations.
 
 ---
 
 ## `src/modal.py`
 
-Implements the standard generalized-eigenvalue solution of
-$M\ddot{\theta}+K\theta=0$ and provides an independent reference for the
-state-space propagator.
+Implements the standard generalized-eigenvalue solution of $\mathbf{M}\ddot{\boldsymbol{\theta}}+\mathbf{K}\boldsymbol{\theta}=\mathbf{0}$ via `scipy.linalg.eigh`, providing an independent reference solution.
+
+---
 
 ## `src/nonlinear.py`
 
-Implements the exact nonlinear mass matrix, velocity-squared vector, gravity
-vector, state derivative, and total energy. The velocity vector uses
-$\sin(\theta_d-\theta_k)$ without an additional index-dependent sign.
+Implements the exact nonlinear mass matrix $\mathbf{M}(\boldsymbol{\theta})$, velocity-squared coupling vector $\mathbf{c}(\boldsymbol{\theta}, \dot{\boldsymbol{\theta}})$, gravity vector $\mathbf{g}(\boldsymbol{\theta})$, first-order state derivative, and total physical energy $E = T + U$.
 
 ---
 
-## `validation/run_validation.py`
+## `SymbolicGenTester&Examples/N-MassEqSymboGen.py`
 
-Reproduces the numerical tables from the contribution:
-
-* Structural scaling benchmarks
-* Linear propagation validation against `scipy.linalg.expm` and modal decoupling
-* RK4 consistency comparison
-* Nonlinear energy conservation and sign-regression check
-
----
-
-## `validation/generate_figures.py`
-
-Generates the contribution figures, including:
-
-* Time-domain trajectory comparisons
-* Absolute propagation error plots
-
-Output:
-
-```text
-figures/linear_validation.png
-```
-
----
-
-# Installation
-
-Recommended environment:
+CLI tool and script to generate full symbolic equations of motion for an arbitrary $n$-mass pendulum formatted in Markdown and LaTeX.
 
 ```bash
-pip install numpy scipy matplotlib
+# Direct CLI execution for 5 masses:
+python "Code/SymbolicGenTester&Examples/N-MassEqSymboGen.py" -n 5 -o output_5_mass.md
 ```
 
 ---
 
-# Usage
+# Installation & Testing
 
-## Run numerical validations
+Install dependencies in development mode:
+
+```bash
+pip install -e ".[dev]"
+```
+
+Run unit tests locally:
+
+```bash
+pytest
+```
+
+or with `uv`:
+
+```bash
+uv run pytest
+```
+
+---
+
+# Running Validations & Figures
+
+## Run numerical validation tables
 
 ```bash
 python Code/validation/run_validation.py
 ```
 
-## Generate figures
+## Generate paper figures
 
 ```bash
 python Code/validation/generate_figures.py
@@ -163,32 +183,23 @@ python Code/validation/generate_figures.py
 
 ---
 
-# Reproducibility
-
-The repository is designed to reproduce the numerical experiments reported in the contribution.
-
-Reference solutions use:
-
-```python
-scipy.linalg.expm
-```
-
-for exact matrix exponential propagation.
-
----
-
 # License
 
-This repository is released under the MIT License.
+This project is released under the **MIT License**. See [LICENSE](LICENSE) for details.
 
 ---
 
 # Citation
 
-If you use this repository, please cite:
+If you use this repository or framework in your research, please cite:
 
-Rodríguez Arias, Y. A., & Arellano González, S.
-"A Unified Structural and Operator Framework for the Linear n-Mass Pendulum"
-
-Stable Zenodo concept DOI: https://doi.org/10.5281/zenodo.20102179
+```bibtex
+@article{rodriguez_arellano_2026_pendulum,
+  author    = {Rodr{\'i}guez Arias, Yonatan Ali and Arellano Gonz{\'a}lez, Sandra},
+  title     = {A Unified Structural and Operator Framework for the Linear $n$-Mass Pendulum},
+  year      = {2026},
+  doi       = {10.5281/zenodo.20102179},
+  url       = {https://doi.org/10.5281/zenodo.20102179}
+}
+```
 

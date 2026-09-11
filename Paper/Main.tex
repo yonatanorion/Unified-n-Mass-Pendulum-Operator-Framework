@@ -325,22 +325,20 @@ Therefore the stiffness matrix $\K$ is diagonal:
 \end{equation}
 No off-diagonal entries appear because the quadratic potential contains only $\theta_j^2$ terms; the coordinate convention (angles measured from the downward vertical) eliminates $\theta_i\theta_j$ cross couplings.
 
-\subsection{Standard Modal Decoupling}
-
 Because $\M$ and $\K$ are symmetric positive definite for positive masses and lengths, the generalized eigenproblem admits an $\M$-orthonormal modal matrix $\mathbf{U}$:
 \begin{equation}\label{eq:modal-eigenproblem}
   \K\mathbf{U}=\M\mathbf{U}\boldsymbol{\Omega}^{2},\qquad
   \mathbf{U}\trans\M\mathbf{U}=\mathbf{I},\qquad
   \mathbf{U}\trans\K\mathbf{U}=\boldsymbol{\Omega}^{2},
 \end{equation}
-where $\boldsymbol{\Omega}=\operatorname{diag}(\omega_1,\ldots,\omega_n)$ and $\omega_j>0$.  With $\boldsymbol{\theta}=\mathbf{U}\mathbf{q}$, the system decouples into $\ddot q_j+\omega_j^2q_j=0$, with the exact solution
+where $\boldsymbol{\Omega}=\operatorname{diag}(\omega_1,\ldots,\omega_n)$ with strictly positive and well-ordered natural frequencies $0 < \omega_1 < \omega_2 < \dots < \omega_n$. The strict positive definiteness of both $\M$ (due to the positive physical inertias and distinct link geometry) and $\K$ (due to non-zero gravitational restoration) guarantees the complete absence of zero-frequency rigid body modes or unstable roots. With $\boldsymbol{\theta}=\mathbf{U}\mathbf{q}$, the system decouples into $\ddot q_j+\omega_j^2q_j=0$, with the exact solution
 \begin{equation}\label{eq:modal-solution}
   q_j(t)=q_j(0)\cos(\omega_j t)
   +\frac{\dot q_j(0)}{\omega_j}\sin(\omega_j t).
 \end{equation}
 This is the natural direct solution for the unforced linear second-order problem and is used below as an independent numerical reference.
 
-\subsection{State-Space Representation}
+\subsection{State-Space Representation and Control Readiness}
 
 Define the state vector $\Rstate(t) = (\boldsymbol{\theta}(t), \dot{\boldsymbol{\theta}}(t))\trans \in \R^{2n}$.  The linearized system can then be written as
 \begin{equation}
@@ -350,7 +348,7 @@ Define the state vector $\Rstate(t) = (\boldsymbol{\theta}(t), \dot{\boldsymbol{
 -\M^{-1}\K & \mathbf{0}
 \end{pmatrix}.
 \end{equation}
-The matrix $\A$ is constant, which allows the use of explicit operator-based propagators.  This first-order form is not required for the modal solution; it is retained because a reusable transition matrix is convenient in state-space control, forcing, and estimation workflows.
+The matrix $\A$ is constant and possesses purely imaginary conjugate eigenvalue pairs $\pm i\omega_j$, reflecting the undamped Hamiltonian structure of small oscillations. This first-order form is not required for the modal solution; it is retained because a reusable transition operator is directly compatible with modern state-space control frameworks, observer/Kalman filter design, and linear-quadratic regulation (LQR) where input matrices $\mathbf{B}_u$ are coupled to the equations of motion.
 
 \section{Operator-Based Dynamic Propagation}
 \label{sec:operator}

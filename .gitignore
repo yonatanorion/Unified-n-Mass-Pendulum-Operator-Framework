@@ -2,4 +2,14 @@
 **/.DS_Store
 __pycache__/
 *.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
 tmp/
+

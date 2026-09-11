@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "n-mass-pendulum-framework"
+version = "1.2.0"
+description = "A Unified Structural and Operator Framework for the Linear n-Mass Pendulum"
+readme = "README.md"
+authors = [
+    { name = "Yonatan Ali Rodríguez Arias", email = "yonatanorion_84@hotmail.com" },
+    { name = "Sandra Arellano González", email = "ag.sandra012@gmail.com" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.21.0",
+    "scipy>=1.7.0",
+    "matplotlib>=3.4.0",
+    "sympy>=1.10.0"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Mathematics"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["Code"]
+include = ["src*", "validation*"]
+
+[tool.pytest.ini_options]
+testpaths = ["Code/tests"]
+pythonpath = ["Code"]
+addopts = "-v --strict-markers"
