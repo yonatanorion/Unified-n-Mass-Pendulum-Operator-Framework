@@ -6,6 +6,8 @@ from typing import Sequence, Tuple, Union
 import numpy as np
 from numpy.typing import NDArray
 
+from .structure import dynamic_matrix_dense
+
 ArrayLike = Union[Sequence[float], NDArray[np.float64]]
 
 
@@ -69,10 +71,11 @@ def assemble_system(
         # Diagonal gravitational stiffness
         K[j, j] = S[j] * g * lengths_arr[j]
 
-    # Solving M X = K is more stable than forming inv(M) explicitly.
-    M_solve_K = np.linalg.solve(M, K)
+    # M^{-1} K is tridiagonal with a closed form (see src/structure.py), so the
+    # dynamic block of A is obtained in O(n) without solving a linear system.
+    Q = dynamic_matrix_dense(masses_arr, lengths_arr, g)
     A = np.block([
         [np.zeros((n, n), dtype=np.float64), np.eye(n, dtype=np.float64)],
-        [-M_solve_K, np.zeros((n, n), dtype=np.float64)],
+        [-Q, np.zeros((n, n), dtype=np.float64)],
     ])
     return A, M, K

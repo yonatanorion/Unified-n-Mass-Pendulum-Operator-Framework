@@ -63,7 +63,7 @@ def structural_scaling_table():
 
 def linear_validation_table():
     print("\n" + "=" * 94)
-    print("TABLE 2: Maximum error in theta_1(t) over t in [0, 8] s")
+    print("TABLE 1: Maximum error in theta_1(t) over t in [0, 8] s")
     print("=" * 94)
     print(
         f"{'System':<12} {'Parameters':<14} {'dt (s)':<10} "
@@ -96,7 +96,7 @@ def linear_validation_table():
 
 def runge_kutta_comparison_table():
     print("\n" + "=" * 72)
-    print("TABLE 3: Discrete propagator consistency for n=3 non-uniform")
+    print("TABLE 4: Discrete propagator consistency for n=3 non-uniform")
     print("=" * 72)
     print(f"{'Method':<28} {'dt (s)':<12} {'Max error (rad)':<20}")
     print("-" * 72)
@@ -136,7 +136,7 @@ def runge_kutta_comparison_table():
 def nonlinear_energy_validation():
     """Reproduce the reviewer's double-pendulum energy test."""
     print("\n" + "=" * 72)
-    print("TABLE 4: Corrected nonlinear double-pendulum energy balance")
+    print("TABLE 3: Nonlinear double-pendulum energy balance (with negative control)")
     print("=" * 72)
 
     masses = np.ones(2)
@@ -145,7 +145,7 @@ def nonlinear_energy_validation():
     times = np.linspace(0.0, 6.0, 601)
 
     def flawed_state_derivative(_time, state, masses_value, lengths_value, g):
-        """Former piecewise-sign equation, retained only as a regression check."""
+        """Negative control: spurious sign on k < d terms, to show the energy test detects it."""
         theta = state[:2]
         velocity = state[2:]
         M, _, gravity = nonlinear_terms(
@@ -172,8 +172,8 @@ def nonlinear_energy_validation():
 
     drifts = {}
     for label, derivative in [
-        ("Corrected equation", state_derivative),
-        ("Former piecewise sign", flawed_state_derivative),
+        ("As derived", state_derivative),
+        ("Negative control (sign)", flawed_state_derivative),
     ]:
         solution = solve_ivp(
             derivative,
@@ -195,14 +195,13 @@ def nonlinear_energy_validation():
         drifts[label] = np.max(np.abs(energy - energy[0]))
         print(f"{label:<24}: {drifts[label]:.3e}")
 
-    if drifts["Corrected equation"] > 1e-10:
+    if drifts["As derived"] > 1e-10:
         raise AssertionError("corrected nonlinear equations do not conserve energy")
-    if drifts["Former piecewise sign"] < 1e-6:
+    if drifts["Negative control (sign)"] < 1e-6:
         raise AssertionError("energy regression check did not detect the old sign error")
 
 
 def main():
-    structural_scaling_table()
     linear_validation_table()
     runge_kutta_comparison_table()
     nonlinear_energy_validation()
