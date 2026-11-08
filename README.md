@@ -1,4 +1,4 @@
-# A Unified Structural and Operator Framework for the Linear n-Mass Pendulum
+# Closed-Form Tridiagonal Structure and O(n) Algorithms for the Linear and Nonlinear n-Mass Pendulum
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20102179.svg)](https://doi.org/10.5281/zenodo.20102179)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -6,7 +6,7 @@
 
 This repository contains the scientific paper, figures, and reference Python implementation for:
 
-> **A Unified Structural and Operator Framework for the Linear $n$-Mass Pendulum**  
+> **Closed-Form Tridiagonal Structure and $\mathcal{O}(n)$ Algorithms for the Linear and Nonlinear $n$-Mass Pendulum**  
 > *Yonatan Ali Rodríguez Arias & Sandra Arellano González*
 
 The project presents:
@@ -110,6 +110,34 @@ $$
 
 ---
 
+## `src/structure.py` (new in v2)
+
+Closed-form tridiagonal structure of the linearized problem, all in $\mathcal{O}(n)$:
+
+* `inverse_mass_tridiagonal`: $\mathbf{M}^{-1}$ in closed form (Theorem 1)
+* `dynamic_matrix_tridiagonal` / `apply_dynamic_matrix`: $\mathbf{Q}=\mathbf{M}^{-1}\mathbf{K}$ (Corollary 1)
+* `jacobi_matrix`, `natural_frequencies`, `modal_matrix`: symmetric Jacobi form and spectrum (Theorem 2)
+
+---
+
+## `src/symplectic.py` (new in v2)
+
+Störmer–Verlet on $\ddot{\boldsymbol\theta}=-\mathbf{Q}\boldsymbol\theta$ with $\mathcal{O}(n)$ cost per step, $\mathcal{O}(n)$ energy evaluation and a stability check ($\Delta t\,\omega_n<2$).
+
+---
+
+## `src/chain.py` (new in v2)
+
+Exact nonlinear dynamics in $\mathcal{O}(n)$ through the tridiagonal rod-tension system (Theorem 3), plus a symplectic RATTLE integrator in Cartesian coordinates with tridiagonal constraint solves.
+
+```python
+from src import chain
+acc = chain.angular_acceleration(theta, omega, masses, lengths)        # O(n), exact
+t, th, om, _ = chain.rattle_propagate(theta0, omega0, masses, lengths, dt=1e-3, n_steps=10_000)
+```
+
+---
+
 ## `src/propagator.py`
 
 Implements operator-based linear propagation using a scaled-and-squared Peano-Baker/Taylor expansion:
@@ -175,6 +203,16 @@ uv run pytest
 python Code/validation/run_validation.py
 ```
 
+## Structure, symplectic and nonlinear benchmarks (v2 figures)
+
+```bash
+python Code/validation/benchmark_structure.py     # Fig. 3, Table 2
+python Code/validation/benchmark_symplectic.py    # Fig. 5
+python Code/validation/benchmark_nonlinear.py     # Fig. 6
+```
+
+Add `--quick` for a shorter run. Timings are platform dependent; the paper's were measured single-threaded.
+
 ## Generate paper figures
 
 ```bash
@@ -196,7 +234,7 @@ If you use this repository or framework in your research, please cite:
 ```bibtex
 @article{rodriguez_arellano_2026_pendulum,
   author    = {Rodr{\'i}guez Arias, Yonatan Ali and Arellano Gonz{\'a}lez, Sandra},
-  title     = {A Unified Structural and Operator Framework for the Linear $n$-Mass Pendulum},
+  title     = {Closed-Form Tridiagonal Structure and $\mathcal{O}(n)$ Algorithms for the Linear and Nonlinear $n$-Mass Pendulum},
   year      = {2026},
   doi       = {10.5281/zenodo.20102179},
   url       = {https://doi.org/10.5281/zenodo.20102179}
