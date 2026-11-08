@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "n-mass-pendulum-framework"
-version = "2.0.0.dev0"
+version = "2.0.0"
 description = "Closed-form tridiagonal structure and O(n) algorithms for the linear and nonlinear n-mass pendulum"
 readme = "README.md"
 authors = [
