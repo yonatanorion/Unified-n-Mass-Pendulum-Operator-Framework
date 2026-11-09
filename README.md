@@ -91,6 +91,7 @@ pdflatex "\def\anonymous{}\input{Main}"                                   # anon
 
 ## Version history
 
+* **v3.0.1:** repository cleanup (earlier scripts and figures moved to `Code/legacy/`); paper unchanged.
 * **v3.0.0:** rewritten as an AJP article (submitted to *American Journal of Physics*) around the beaded-string picture, with prior work credited (Bernoulli 1732, Gantmacher–Krein, McCreesh et al., Levinson, Lee, Preston, Baraff, Bailey et al., Konishi & Yanagita).
 * **v2.0.0:** closed-form tridiagonal structure and O(n) linear and nonlinear algorithms.
 * **v1.x:** original operator framework.
