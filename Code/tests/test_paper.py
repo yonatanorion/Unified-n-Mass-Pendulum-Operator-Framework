@@ -70,3 +70,32 @@ def test_appendix_listing_is_verbatim():
     listing = re.search(r"\\begin\{lstlisting\}\n(.*?)\\end\{lstlisting\}", open(PAPER).read(), re.S).group(1)
     src = open(os.path.join(os.path.dirname(__file__), "..", "src", "minimal.py")).read()
     assert listing in src
+
+
+def _levinson_frequencies(n, d, k, modes=1):
+    """Levinson (1977) chain of n identical links: mass center a fraction d below the upper pin,
+    radius of gyration sqrt(k) times the link length; returns omega / sqrt(g/L)."""
+    from scipy.linalg import eigh
+    i = np.arange(1, n + 1)
+    jmax = np.maximum.outer(i, i)
+    A = d + n - jmax.astype(float)
+    np.fill_diagonal(A, d * d + k + n - i)
+    B = np.diag(n * (d + n - i).astype(float))
+    return np.sqrt(eigh(B, A, eigvals_only=True, subset_by_index=[0, modes - 1]))
+
+
+def test_levinson_point_mass_case_equals_our_mass_matrix():
+    n = 7
+    _, M, _ = assemble_system(np.ones(n), np.ones(n))
+    i = np.arange(1, n + 1)
+    A = 1 + n - np.maximum.outer(i, i).astype(float)
+    np.fill_diagonal(A, 1 + n - i)
+    np.testing.assert_allclose(A, M)
+
+
+@pytest.mark.parametrize("d, expected", [(1.0, -0.25), (0.75, -0.125), (0.5, 0.0)])
+def test_effective_length_L_plus_d_minus_half_link(d, expected):
+    n = 400   # large enough for the asymptotic regime, small enough to stay well above round-off
+    w = _levinson_frequencies(n, d, 0.0)[0]
+    exact = jn_zeros(0, 1)[0] / 2
+    assert n * (w - exact) / exact == pytest.approx(expected, abs=3e-3)
