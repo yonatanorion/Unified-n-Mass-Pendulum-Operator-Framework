@@ -1,760 +1,285 @@
-\documentclass[12pt]{article}
-\usepackage[utf8]{inputenc}  
+% Compile two versions from this file:
+%   anonymous (AJP submission):  pdflatex "\def\anonymous{}\input{Main}"
+%   named (preprint / Zenodo):   pdflatex Main
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usepackage[english]{babel}
-\usepackage{amsmath, amssymb, amsfonts, amsthm}
-\newtheorem{theorem}{Theorem}
-\newtheorem{proposition}{Proposition}
-\newtheorem{corollary}{Corollary}
-\theoremstyle{remark}
-\newtheorem{remark}{Remark}
+\usepackage{amsmath, amssymb, amsthm}
 \usepackage{authblk}
-\usepackage{booktabs}
-\usepackage{array}
-\usepackage{caption}
-\usepackage{subcaption}
-\usepackage{algorithm}
-\usepackage{algpseudocode}
-\usepackage{hyphenat}
-\usepackage{xcolor}
-\usepackage{listings}        
-\usepackage{microtype}
 \usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{geometry}
 \usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
-\usepackage{geometry}
 \usepackage{doi}
 \usepackage[numbers,sort&compress]{natbib}
-\setlength{\emergencystretch}{2em}
-\renewcommand{\doitext}{doi:\penalty0\ }
 \geometry{margin=1in}
+\setlength{\emergencystretch}{2em}
 
-% Colors for listings
-\definecolor{codebg}{rgb}{0.95,0.95,0.97}
-\definecolor{frameworkblue}{RGB}{10,40,80}
-\lstset{
-    language=Python,
-    basicstyle=\ttfamily\footnotesize,
-    backgroundcolor=\color{codebg},
-    frame=single,
-    rulecolor=\color{frameworkblue},
-    breaklines=true,
-    showstringspaces=false,
-    commentstyle=\color{green!60!black}\itshape,
-    keywordstyle=\color{frameworkblue}\bfseries,
-    stringstyle=\color{red!70!black},
-    numbers=left,
-    numberstyle=\tiny\color{gray},
-    numbersep=6pt,
-    tabsize=4,
-    captionpos=b
-}
+\newif\ifanon
+\ifdefined\anonymous \anontrue \else \anonfalse \fi
 
-% Useful commands
-\newcommand{\R}{\mathbb{R}}
+\newtheorem{proposition}{Proposition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+
 \newcommand{\M}{\mathbf{M}}
 \newcommand{\K}{\mathbf{K}}
-\newcommand{\A}{\mathcal{A}}
-\newcommand{\Rstate}{\mathbf{R}}
-\newcommand{\trans}{^{\mathsf{T}}}
+\newcommand{\E}{\mathbf{E}}
+\newcommand{\D}{\mathbf{D}}
+\newcommand{\Lm}{\mathbf{L}}
+\newcommand{\Q}{\mathbf{Q}}
+\newcommand{\B}{\mathbf{B}}
+\newcommand{\J}{\mathbf{J}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\T}{^{\mathsf{T}}}
 
-\title{Closed-Form Tridiagonal Structure and $\mathcal{O}(n)$ Algorithms \\ for the Linear and Nonlinear $n$-Mass Pendulum}
-\author[1]{Yonatan Ali Rodr\'iguez Arias\thanks{Corresponding author: \texttt{yonatanorion\_84@hotmail.com}; ORCID: \href{https://orcid.org/0000-0001-6080-2898}{0000-0001-6080-2898}}}
-\author[1]{Sandra Arellano Gonz\'alez\thanks{\texttt{ag.sandra012@gmail.com}; ORCID: \href{https://orcid.org/0000-0002-2904-0474}{0000-0002-2904-0474}}}
-\affil[1]{Instituto Polit\'ecnico Nacional, Escuela Superior de Ingenier\'ia Mec\'anica y El\'ectrica (ESIME) Unidad Zacatenco,
-         Unidad Profesional ``Adolfo L\'opez Mateos'', Building 5, 3rd floor,
-         Zacatenco, Alcald\'ia Gustavo A.\ Madero, 07738 Ciudad de M\'exico, Mexico}
-\date{November 2026}
+\lstset{language=Python, basicstyle=\ttfamily\footnotesize, frame=single,
+  breaklines=true, showstringspaces=false, columns=fullflexible,
+  commentstyle=\color{gray}\itshape, keywordstyle=\bfseries}
+
+\title{The multiple pendulum as a beaded string:\\ hidden tridiagonal structure from normal modes to nonlinear dynamics}
+
+\ifanon
+  \author{}
+  \date{}
+\else
+  \author[1]{Yonatan Ali Rodr\'iguez Arias\thanks{Corresponding author: \texttt{yonatanorion\_84@hotmail.com}; ORCID: \href{https://orcid.org/0000-0001-6080-2898}{0000-0001-6080-2898}}}
+  \author[1]{Sandra Arellano Gonz\'alez\thanks{\texttt{ag.sandra012@gmail.com}; ORCID: \href{https://orcid.org/0000-0002-2904-0474}{0000-0002-2904-0474}}}
+  \affil[1]{Instituto Polit\'ecnico Nacional, Escuela Superior de Ingenier\'ia Mec\'anica y El\'ectrica (ESIME) Unidad Zacatenco, Ciudad de M\'exico 07738, Mexico}
+  \date{November 2026}
+\fi
+
 \begin{document}
 \maketitle
-\begin{abstract}
-\noindent The linearized equations of the planar $n$-mass pendulum are organized by a cumulative mass-sum structure, $\sum_{i\ge\max(d,k)} m_i$, which we state in matrix form and prove directly from the kinetic energy. It induces the factorization $\mathbf{M}=\mathbf{L}\mathbf{E}^{\mathsf{T}}\mathbf{D}\mathbf{E}\mathbf{L}$ of the mass matrix, from which the main results follow: the inverse mass matrix and the dynamic matrix $\mathbf{M}^{-1}\mathbf{K}$ are tridiagonal in closed form, so the state-space operator is assembled in $\mathcal{O}(n)$ operations without solving any linear system; and the problem is similar to a symmetric Jacobi matrix, which proves that all natural frequencies are simple and that the $k$-th mode has exactly $k-1$ sign changes. The same structure yields a symplectic St\"ormer--Verlet integrator with $\mathcal{O}(n)$ cost per step and an $\mathcal{O}(n)$ energy evaluation. Numerically, the closed form is faster than the dense route by orders of magnitude and about four orders of magnitude more accurate at $n=3000$; the spectrum of a uniform chain converges to that of the continuous hanging chain at rate $\mathcal{O}(n^{-1})$; and the integrator keeps a bounded energy error over $10^6$ steps and remains practical at $n=10^6$, where the dense transition matrix would require terabytes of storage. Beyond small oscillations, the rod tensions satisfy a tridiagonal system whose matrix is the angle-dependent continuation of the same structure; it gives the exact nonlinear accelerations in $\mathcal{O}(n)$ operations, about 4000 times faster than the dense formulation at $n=3000$, and a symplectic RATTLE integrator with $\mathcal{O}(n)$ cost per step, validated in the chaotic regime. Code and data are openly available.
-\end{abstract}
 
-\noindent\textbf{Keywords:} $n$-mass pendulum; small oscillations; tridiagonal inverse; Jacobi matrix; symplectic integration; nonlinear dynamics; RATTLE; hanging chain
+\begin{abstract}
+\noindent The equations of motion of a planar pendulum made of $n$ point masses joined by massless rods look forbidding in the usual angle coordinates: through a dense mass matrix, every mass is coupled to every other. We show that this coupling is an artifact of the coordinates. A one-line factorization of the mass matrix reveals that, in terms of the horizontal displacements of the masses, the small oscillations are those of a beaded string whose tension decreases with height, and that in the angle coordinates themselves the inverse mass matrix and the dynamical matrix are tridiagonal, with simple closed-form entries. Classical results on tridiagonal (Jacobi) matrices then give, with almost no work, simple frequencies and modes whose $k$-th member has $k-1$ nodes, and the spectrum converges to that of the continuous hanging chain; numerically, the discrete chain behaves like a continuous one lengthened by half a link. For large amplitudes, the rod tensions obey a tridiagonal linear system whose zero-angle limit is exactly the inverse mass matrix of the linear theory, so the exact nonlinear accelerations follow from a few lines of code at a cost proportional to $n$. The material connects introductory mechanics, linear algebra and computational physics and lends itself to classroom and computer exercises.
+\end{abstract}
 
 \section{Introduction}
 
-The pendulum remains one of the most fundamental systems in classical mechanics and continues to serve as a canonical model in multibody dynamics, robotics, vibration analysis, and control systems~\cite{lobas2005generalized,fritzkowski2008dynamics,fritzkowski2009dynamics,tomaszewski2005dynamics,kawaji1991control,plaut2013pendulum}. While the equations of motion for single and double pendulum systems are widely known, explicitly deriving the equations governing an arbitrary $n$-mass pendulum rapidly becomes cumbersome due to the combinatorial growth of inertial and trigonometric coupling terms.
+The double pendulum is the standard first example of chaos in mechanics, and chains of pendulums are used to model ropes, chains and even ponytails.\cite{fritzkowski2008dynamics,tomaszewski2005dynamics,plaut2013pendulum} Students who try to go beyond two or three links, however, quickly meet equations of motion that seem to couple every mass to every other. In the absolute angles $\theta_k$ of the links, the mass matrix of an $n$-mass pendulum is dense: each entry is a sum of masses times a cosine of an angle difference.\cite{yesilyurt2019equations,charles2019lagrangian,konishi2023multiple,bondada2023dynamics}
 
-\subsection{Related Work and Framework Positioning}
+Physically this is puzzling. Each mass is acted on only by gravity and by the two rods attached to it, so the dynamics should couple each link only to its neighbors. This paper explains where the nearest-neighbor structure is hidden and what follows from it. The central observation is a factorization of the mass matrix (Sec.~\ref{sec:eom}) that exposes, after a change of variables, a familiar system: a beaded string under nonuniform tension (Sec.~\ref{sec:string}). Back in angle coordinates, the inverse mass matrix and the dynamical matrix are tridiagonal in closed form. The normal modes then follow from the classical theory of tridiagonal matrices, and the continuum limit reproduces the hanging chain of D.~Bernoulli (Sec.~\ref{sec:modes}). For large amplitudes, a Newtonian formulation with the rod tensions as unknowns again leads to a tridiagonal system, and its zero-angle limit is exactly the inverse mass matrix of the linear theory (Sec.~\ref{sec:nonlinear}).
 
-Several mature approaches exist for multibody equation generation and simulation. Featherstone's articulated-body algorithm~\cite{featherstone2008rigid} prioritizes recursive computational efficiency, achieving $\mathcal{O}(n)$ scaling suitable for real-time applications, though it operates implicitly through factorized spatial algebra. Kane's method~\cite{kane1985dynamics} provides a highly systematic approach for deriving minimal-order equations but typically requires manual formulation for specific topologies. General recursive formulations covering serial and tree-topology systems are treated in~\cite{jain2011robot,shabana2013dynamics}. Furthermore, general-purpose symbolic environments (e.g., SymPy mechanics) can derive explicit equations but often yield massive, unstructured expressions for large $n$.
+None of the ingredients is new in isolation. The beaded string and its oscillation properties are treated in the classic monograph of Gantmacher and Krein,\cite{gantmacher2002oscillation} the continuous hanging chain is a textbook problem,\cite{verbin2015boundary} a tridiagonal system for the tensions of a discrete chain appears in Preston's analysis of whips and chains,\cite{preston2011motion} and computational multibody dynamics achieves cost proportional to $n$ for any serial chain through recursive or sparse algorithms.\cite{featherstone2008rigid,jain2011robot,baraff1996linear,bailey2008efficient} Our purpose is to connect these results in a single, elementary thread, written in the angle coordinates in which students first meet the problem, with explicit formulas that can be checked by hand for $n=2$ and coded in a few lines. We have not found the identification of the zero-angle tension matrix with the inverse mass matrix (Corollary~\ref{cor:link}) stated explicitly. Suggested problems are collected in Sec.~\ref{sec:problems}.
 
-Closed-form equations of motion for the planar pendulum with $n$ point masses have also been derived directly. Yesilyurt~\cite{yesilyurt2019equations} obtained the general equations by Lagrangian mechanics and induction; when regrouped, the coefficient multiplying each pair of links is the cumulative mass sum used below. Charles~\cite{charles2019lagrangian} gave a general Lagrangian formulation together with a small-angle analysis. The classical theory of small vibrations of chain-like systems, including the oscillatory character of their spectra, is treated by Gantmacher and Krein~\cite{gantmacher2002oscillation}. We do not claim the cumulative mass sum itself as new; our aim is to state it in compact matrix form with a direct proof and to exploit it systematically in the assembly and solution of the linear problem.
+\section{Equations of motion in angle coordinates}
+\label{sec:eom}
 
-The present work pursues a complementary objective: \textbf{explicit structural transparency}. Instead of focusing on raw computational speed for massive degrees of freedom, we make the cumulative mass-sum structure the organizing principle of the matrix assembly and of the linear solution strategies built on it.
-
-The resulting symmetric positive-definite second-order system admits the standard generalized-eigenvalue (modal) solution.  We use that solution as an independent reference and retain a state-space matrix-exponential implementation for applications in which a transition operator is convenient, such as control and repeated propagation.  The matrix exponential is evaluated by a scaled-and-squared truncated Peano--Baker (Taylor) series; this numerical device is standard~\cite{moler2003nineteen,higham2005scaling} and is not claimed as a new matrix-exponential algorithm. The conceptual pipeline is illustrated in Figure~\ref{fig:pipeline}.
-
-\begin{figure}[htbp]
+\begin{figure}[t]
   \centering
-  \vspace{0.3cm}
-  \noindent\fbox{%
-    \parbox{0.95\textwidth}{%
-      \centering
-      \vspace{0.2cm}
-      \textbf{Lagrangian Formulation} $\longrightarrow$
-      \textbf{Cumulative Mass-Sum Rule} $\longrightarrow$
-      \textbf{Matrix Assembly} \\ \vspace{0.2cm}
-      $\longrightarrow$ \textbf{State-Space Linearization} $\longrightarrow$
-      \textbf{Matrix Exponential Propagation}
-      \vspace{0.2cm}
-    }%
-  }
-  \vspace{0.2cm}
-  \caption{Conceptual pipeline of the proposed framework, bridging explicit structural generation and operator-based linear propagation.}
-  \label{fig:pipeline}
+  \includegraphics[width=0.42\textwidth]{figures/n_mass_pendulum.png}
+  \caption{Planar pendulum with $n$ point masses $m_k$ and massless rods of lengths $l_k$. Each angle $\theta_k$ is measured from the downward vertical.}
+  \label{fig:sketch}
 \end{figure}
 
-The paper is organized as follows. Sections 2--4 develop the symbolic generation framework and introduce the cumulative mass-sum rule. Sections 5--6 derive the closed-form tridiagonal structure, the state-space system, the operator-based propagator and an $\mathcal{O}(n)$ structure-preserving integrator. Section 7 presents validation results in the linear regime. Section 8 extends the structure to the exact nonlinear dynamics, with an $\mathcal{O}(n)$ tension formulation and a symplectic RATTLE integrator, and validates it in the chaotic regime. Finally, Section 9 concludes.
-
-\section{Lagrangian Formulation of the \texorpdfstring{$n$}{n}-Mass Pendulum}
-\label{sec:lagrangian}
-
-\subsection{Equations of Motion}
-
-The dynamics of the system are derived from the Euler-Lagrange equations
-\begin{equation}\label{eq:euler-lagrange}
-  \frac{d}{dt}\left(\frac{\partial L}{\partial \dot{q}_j}\right)
-  - \frac{\partial L}{\partial q_j} = 0,
-\end{equation}
-where the Lagrangian is defined as $L = T - U$, with $T$ the kinetic energy and $U$ the potential energy. For the $n$-mass pendulum,
-\[
-T = \frac{1}{2} \sum_{i=1}^{n} m_i v_i^2, \qquad
-U = g \sum_{i=1}^{n} m_i y_i,
-\]
-and $v_i^2 = \dot{x}_i^2 + \dot{y}_i^2$.  The generalized coordinates are $q_j = \theta_j$, $j=1,\dots,n$.
-
-\subsection{Coordinate Convention}
-
-Each generalized coordinate $\theta_i$ is measured with respect to the downward vertical direction, as illustrated in Figure~\ref{fig:n_mass}.  The Cartesian coordinates of the $i$-th mass are therefore
-\begin{align}
-  x_i &= \sum_{k=1}^{i} l_k \sin\theta_k, \label{eq:xi} \\
-  y_i &= -\sum_{k=1}^{i} l_k \cos\theta_k. \label{eq:yi}
-\end{align}
-The origin is taken at the pivot, with the positive $x$-axis to the right and the positive $y$-axis upward.  This convention ensures that when all $\theta_k = 0$ (vertical downward equilibrium), $y_i = -\sum_{k=1}^i l_k$ and $x_i=0$.
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.6\textwidth]{figures/n_mass_pendulum.png}
-  \caption{General $n$-mass pendulum with the absolute joint angle convention. Each angle $\theta_i$ is measured from the downward vertical. The coordinate origin is at the pivot.}
-  \label{fig:n_mass}
-\end{figure}
-
-\subsection{Explicit Derivation of Kinetic Energy}
-
-Differentiating Eqs.~(\ref{eq:xi}) and (\ref{eq:yi}) with respect to time gives the velocity components:
-\begin{align}
-  \dot{x}_i &= \sum_{k=1}^{i} l_k \dot{\theta}_k \cos\theta_k, \\
-  \dot{y}_i &= \sum_{k=1}^{i} l_k \dot{\theta}_k \sin\theta_k.
-\end{align}
-Hence,
-\begin{equation}
-  v_i^2 = \dot{x}_i^2 + \dot{y}_i^2 = 
-  \sum_{k=1}^{i}\sum_{r=1}^{i} l_k l_r \dot{\theta}_k \dot{\theta}_r
-  \bigl(\cos\theta_k\cos\theta_r + \sin\theta_k\sin\theta_r\bigr).
-\end{equation}
-Using the trigonometric identity $\cos\theta_k\cos\theta_r+\sin\theta_k\sin\theta_r = \cos(\theta_k-\theta_r)$, we obtain the compact expression
-\begin{equation}\label{eq:v_sq}
-  v_i^2 = \sum_{k=1}^{i}\sum_{r=1}^{i}
-  l_k l_r \dot{\theta}_k \dot{\theta}_r
-  \cos(\theta_k-\theta_r).
-\end{equation}
-Note that the double sum runs over all pairs of links up to the $i$-th mass.  The total kinetic energy is then
-\begin{equation}
-  T = \frac{1}{2} \sum_{i=1}^{n} m_i \sum_{k=1}^{i}\sum_{r=1}^{i}
-  l_k l_r \dot{\theta}_k \dot{\theta}_r \cos(\theta_k-\theta_r).
-\end{equation}
-
-\subsection{Potential Energy and its Linearization}
-
-Substituting $y_i$ from Eq.~(\ref{eq:yi}) gives the potential energy
-\begin{equation}
-  U = g \sum_{i=1}^{n} m_i \left(-\sum_{k=1}^{i} l_k \cos\theta_k\right)
-  = -g \sum_{k=1}^{n} \left(\sum_{i=k}^{n} m_i\right) l_k \cos\theta_k.
-\end{equation}
-For small oscillations we expand $\cos\theta_k \approx 1 - \theta_k^2/2$; the constant term does not affect the dynamics, so the relevant part is
-\begin{equation}\label{eq:U_quadratic}
-  U_{\text{quad}} = \frac{g}{2} \sum_{k=1}^{n} \left(\sum_{i=k}^{n} m_i\right) l_k \theta_k^2.
-\end{equation}
-No cross terms $\theta_i\theta_j$ ($i\neq j$) appear because the expansion of each cosine depends only on its own angle.  This crucial simplification leads to a diagonal stiffness matrix, as shown in Section~\ref{sec:diagonal}.
-
-\section{Structural Pattern of the Equations of Motion}
-\label{sec:structural}
-
-For small systems, the equations of motion can be derived manually.  However, the combinatorial growth of velocity products makes manual derivation impractical for large $n$.  The equations nevertheless share an invariant structural property (cf.~\cite{yesilyurt2019equations}): every term in the $d$-th equation that involves coordinate $\theta_k$ or its derivatives contains the factor
-\begin{equation}\label{eq:prefix-sum}
-  \boxed{M_{d,k}^{\mathrm{coeff}} = \sum_{i=\max(d,k)}^{n} m_i}.
-\end{equation}
-
-\subsection{The Cumulative Mass-Sum Rule as an Organizing Principle}
-
-This property follows directly from the kinetic energy.
+Consider point masses $m_1,\dots,m_n$ joined by massless rigid rods of lengths $l_1,\dots,l_n$, with the first rod hinged at a fixed pivot (Fig.~\ref{fig:sketch}). With $\theta_k$ the angle of rod $k$ from the downward vertical, mass $i$ is at
+$x_i=\sum_{k\le i} l_k\sin\theta_k$, $y_i=-\sum_{k\le i} l_k\cos\theta_k$, and its squared speed is
+$v_i^2=\sum_{k,r\le i} l_kl_r\dot\theta_k\dot\theta_r\cos(\theta_k-\theta_r)$.
+Mass $i$ contributes to the pair $(k,r)$ only if both links lie above it, that is, if $i\ge\max(k,r)$. Exchanging the order of summation gives the following.
 
 \begin{proposition}\label{prop:T}
-For the planar $n$-mass pendulum with absolute angles,
-\[
-T=\tfrac12\sum_{d=1}^{n}\sum_{k=1}^{n} S_{\max(d,k)}\, l_d l_k\cos(\theta_d-\theta_k)\,\dot\theta_d\dot\theta_k,
-\qquad S_j=\sum_{i=j}^{n} m_i .
-\]
+With the suffix masses $S_j=\sum_{i=j}^{n} m_i$ (the mass hanging below the top of rod $j$),
+\begin{equation}\label{eq:T}
+  T=\frac12\sum_{k,r=1}^{n} S_{\max(k,r)}\,l_kl_r\cos(\theta_k-\theta_r)\,\dot\theta_k\dot\theta_r,\qquad
+  U=-g\sum_{k=1}^{n} S_k\,l_k\cos\theta_k .
+\end{equation}
 \end{proposition}
-\begin{proof}
-In Eq.~(\ref{eq:v_sq}) mass $m_i$ contributes to the pair $(d,k)$ if and only if $d\le i$ and $k\le i$, i.e.\ $i\ge\max(d,k)$. Exchanging the order of summation in $T=\tfrac12\sum_i m_i v_i^2$ collects these contributions into $S_{\max(d,k)}$.
-\end{proof}
 
-\noindent Applying the Euler--Lagrange equations~(\ref{eq:euler-lagrange}) to this quadratic form, together with the potential energy of Section~\ref{sec:lagrangian}, yields the coefficients listed in Section~\ref{sec:generation}; the velocity-squared terms arise from differentiating $\cos(\theta_d-\theta_k)$ and therefore carry the same factor $S_{\max(d,k)}$, and the gravitational term on joint $d$ carries $S_d=S_{\max(d,d)}$.
+The coefficient $S_{\max(k,r)}$, the mass hanging below both links, organizes every term of the Lagrange equations: the mass matrix $M_{kr}(\btheta)=S_{\max(k,r)}l_kl_r\cos(\theta_k-\theta_r)$, the velocity-squared terms obtained by differentiating the cosines, and the gravitational torques $S_kgl_k\sin\theta_k$. This regrouping is implicit in earlier derivations.\cite{yesilyurt2019equations,konishi2023multiple}
 
-This quantity represents the effective inertia dynamically shared by joints $d$ and $k$.  It acts as an organizing principle because the identical cumulative structure governs:
-\begin{itemize}
-  \item diagonal and coupled acceleration terms,
-  \item centrifugal and Coriolis-like velocity-squared terms,
-  \item localized gravitational contributions.
-\end{itemize}
-
-Physical interpretation: when $k \ge d$, joint $d$ contributes to the acceleration of all masses extending from coordinate $k$ to the end of the chain.  Conversely, when $k < d$, the inertial coupling relies on the deeper segment of the chain.
-
-\subsection{Explicit Example for \texorpdfstring{$n=4$}{n=4}}
-
-Applying the rule to the four-mass pendulum yields the first equation ($d=1$), noting the proper dimensionality factor $l_1$:
-\begin{align}
-  &(m_1+m_2+m_3+m_4)l_1^2\ddot{\theta}_1
-  + (m_2+m_3+m_4)l_1 l_2\ddot{\theta}_2\cos(\theta_1-\theta_2) \nonumber \\
-  &+ (m_3+m_4)l_1 l_3\ddot{\theta}_3\cos(\theta_1-\theta_3)
-  + m_4 l_1 l_4\ddot{\theta}_4\cos(\theta_1-\theta_4) \nonumber \\
-  &+ (m_2+m_3+m_4)l_1 l_2\dot{\theta}_2^2\sin(\theta_1-\theta_2)
-  + (m_3+m_4)l_1 l_3\dot{\theta}_3^2\sin(\theta_1-\theta_3) \nonumber \\
-  &+ m_4 l_1 l_4\dot{\theta}_4^2\sin(\theta_1-\theta_4)
-  + (m_1+m_2+m_3+m_4)g l_1\sin\theta_1 = 0 \label{eq:j1}
-\end{align}
-and the second equation ($d=2$), scaled by $l_2$:
-\begin{align}
-  &(m_2+m_3+m_4)l_2^2\ddot{\theta}_2
-  + (m_3+m_4)l_2 l_3\ddot{\theta}_3\cos(\theta_2-\theta_3)
-  + m_4 l_2 l_4\ddot{\theta}_4\cos(\theta_2-\theta_4) \nonumber \\
-  &+ (m_2+m_3+m_4)l_1 l_2\ddot{\theta}_1\cos(\theta_1-\theta_2)
-  + (m_3+m_4)l_2 l_3\dot{\theta}_3^2\sin(\theta_2-\theta_3) \nonumber \\
-  &+ m_4 l_2 l_4\dot{\theta}_4^2\sin(\theta_2-\theta_4)
-  - (m_2+m_3+m_4)l_1 l_2\dot{\theta}_1^2\sin(\theta_1-\theta_2) \nonumber \\
-  &+ (m_2+m_3+m_4)g l_2\sin\theta_2 = 0. \label{eq:j2}
-\end{align}
-The third and fourth equations can be obtained using the same methodology. 
-Every coefficient is exactly a cumulative mass sum: $\sum_{i=\max(d,k)}^n m_i$ multiplied by the product of lengths $l_d l_k$.
-
-\section{Algorithmic Generation Framework}
-\label{sec:generation}
-
-The complete symbolic structure can be mapped into a concise algorithm using the mass-sum rule, eliminating complex parsers or manual recursion.
-
-\subsection{Matrix Assembly from the Cumulative Sums}
-
-We define the mass matrix $\M(\boldsymbol{\theta})$ and the Coriolis/centrifugal vector $\mathbf{c}(\boldsymbol{\theta},\dot{\boldsymbol{\theta}})$ through the relation
+For small oscillations about the downward equilibrium, $\M\ddot\btheta+\K\btheta=\mathbf{0}$ with constant matrices
+\begin{equation}\label{eq:MK}
+  M_{kr}=S_{\max(k,r)}\,l_kl_r,\qquad K_{kr}=g\,S_k\,l_k\,\delta_{kr}.
+\end{equation}
+Gravity does not couple different angles, but $\M$ is completely full; for $n=3$ and unit masses and lengths,
 \[
-\M(\boldsymbol{\theta})\ddot{\boldsymbol{\theta}} + \mathbf{c}(\boldsymbol{\theta},\dot{\boldsymbol{\theta}}) + \mathbf{g}(\boldsymbol{\theta}) = \mathbf{0},
+\M=\begin{pmatrix}3&2&1\\2&2&1\\1&1&1\end{pmatrix}.
 \]
-where $\mathbf{g}(\boldsymbol{\theta})$ is the gravitational torque vector.  The cumulative mass-sum rule gives explicit formulas:
-\begin{align}
-M_{jk}(\boldsymbol{\theta}) &= \left(\sum_{i=\max(j,k)}^{n} m_i\right) l_j l_k \cos(\theta_j-\theta_k), \\
-c_d(\boldsymbol{\theta},\dot{\boldsymbol{\theta}}) &=
-\sum_{k=1}^{n} \left(\sum_{i=\max(d,k)}^{n} m_i\right) l_d l_k \,
-\dot{\theta}_k^2 \sin(\theta_d-\theta_k), \\
-g_d(\boldsymbol{\theta}) &= \left(\sum_{i=d}^{n} m_i\right) g l_d \sin\theta_d.
-\end{align}
-The sine difference alone determines the sign of every velocity-squared term; no additional index-dependent sign is present.  For example, when $d=2$ and $k=1$, $\sin(\theta_2-\theta_1)=-\sin(\theta_1-\theta_2)$, exactly as in Eq.~(\ref{eq:j2}).
-For the linearized case (small angles) we set $\cos(\cdot)=1$, $\sin(\cdot)=0$ except in the gravitational term where $\sin\theta_d\approx\theta_d$.
-
-\subsection{Algorithm for Linear System Assembly}
-
-The following algorithm constructs the linearized system matrices directly from the cumulative sums without symbolic differentiation.
-
-\begin{algorithm}[htbp]
-  \caption{Linear Matrix Assembly via Cumulative Mass-Sum Rule}
-  \label{alg:assembly}
-  \begin{algorithmic}[1]
-    \Require masses $m_1,\ldots,m_n$, lengths $l_1,\ldots,l_n$, $g$
-    \Ensure mass matrix $\M$, stiffness matrix $\K$
-    \State $S_n \gets m_n$
-    \For{$j \gets n-1$ \textbf{down to} $1$}
-      \State $S_j \gets m_j + S_{j+1}$
-    \EndFor
-    \For{$j \gets 1$ \textbf{to} $n$}
-      \For{$k \gets 1$ \textbf{to} $n$}
-        \State $M_{jk} \gets S_{\max(j,k)} l_j l_k$
-      \EndFor
-      \State $K_{jj} \gets S_j g l_j$
-    \EndFor
-  \end{algorithmic}
-\end{algorithm}
-
-\subsection{Algorithmic Scaling}
-
-The suffix masses $S_j$ require $\mathcal{O}(n)$ work and are computed once.  The subsequent loop assigns $n^2$ entries of $\M$ and $n$ nonzero entries of $\K$, so the assembly requires $\mathcal{O}(n^2)$ work and storage.  Recomputing the sum $\sum_{i=\max(j,k)}^n m_i$ inside every matrix entry would instead require $\mathcal{O}(n^3)$ work and is deliberately avoided. The dense $\M$ is, however, not needed to form the state-space operator: Section~\ref{sec:tridiagonal} shows that $\M^{-1}\K$ is available in closed form in $\mathcal{O}(n)$ operations, whereas forming it by factorizing $\M$ costs $\mathcal{O}(n^3)$.
-
-
-\section{Linearization and Matrix Assembly}
-\label{sec:linearization}
-
-\subsection{Small-Angle Approximation}
-
-For small oscillations, we assume $|\theta_j| \ll 1$ rad.  The following approximations are applied:
-\[
-\sin\theta_j \approx \theta_j, \quad \cos(\theta_i-\theta_j) \approx 1,
-\]
-and velocity-squared terms (which are second order in small quantities) are neglected.  Under these assumptions the equations of motion reduce to the linear system
-\begin{equation}
-\M \ddot{\boldsymbol{\theta}} + \K \boldsymbol{\theta} = \mathbf{0},
+The key step is to notice that $S_{\max(k,r)}=\sum_i m_i\,[i\ge k][i\ge r]$. With $\E$ the $n\times n$ lower-triangular matrix of ones ($E_{ik}=1$ for $i\ge k$), $\D=\operatorname{diag}(m_i)$ and $\Lm=\operatorname{diag}(l_k)$, this reads
+\begin{equation}\label{eq:factor}
+  \M=\Lm\,\E\T\D\,\E\,\Lm .
 \end{equation}
-where $\M$ and $\K$ are constant matrices.
+Equation~(\ref{eq:factor}) immediately shows that $\M$ is symmetric and positive definite, since $\D$ is positive definite and $\E\Lm$ is invertible.
 
-\subsection{Derivation of the Mass Matrix}
+\section{A beaded string in disguise}
+\label{sec:string}
 
-Inserting the small-angle approximation $\cos(\theta_j-\theta_k)\approx 1$ into the general expression for $M_{jk}(\boldsymbol{\theta})$ yields the constant mass matrix
-\begin{equation}\label{eq:Mjk}
-  M_{jk} = \left(\sum_{i=\max(j,k)}^{n} m_i\right) l_j l_k.
+Equation~(\ref{eq:factor}) suggests the change of variables
+\begin{equation}\label{eq:x}
+  \mathbf{x}=\E\Lm\btheta,\qquad x_i=\sum_{k\le i} l_k\theta_k ,
 \end{equation}
-Note that $M_{jk}=M_{kj}$ because $\max(j,k)=\max(k,j)$.  Positive definiteness follows from a factorization: writing $\mathbf{L}=\operatorname{diag}(l_1,\ldots,l_n)$, $\mathbf{D}=\operatorname{diag}(m_1,\ldots,m_n)$ and $\mathbf{E}$ for the lower-triangular matrix of ones ($E_{ij}=1$ for $i\ge j$), Proposition~\ref{prop:T} gives
-\begin{equation}\label{eq:M-factor}
-  \M=\mathbf{L}\,\mathbf{E}\trans\mathbf{D}\,\mathbf{E}\,\mathbf{L},
+which is simply the linearized horizontal displacement of mass $i$. In these variables the kinetic energy is diagonal, $T=\frac12\dot{\mathbf{x}}\T\D\dot{\mathbf{x}}=\frac12\sum_i m_i\dot x_i^2$. Since $\theta_j=(x_j-x_{j-1})/l_j$ with $x_0=0$, the potential energy becomes
+\begin{equation}\label{eq:Ux}
+  U=\frac12\sum_{j=1}^{n}\frac{gS_j}{l_j}\,(x_j-x_{j-1})^2 .
 \end{equation}
-since $(\mathbf{E}\trans\mathbf{D}\mathbf{E})_{jk}=\sum_i m_i E_{ij}E_{ik}=S_{\max(j,k)}$. Because $\mathbf{D}$ is positive definite and $\mathbf{E}\mathbf{L}$ is invertible for positive masses and lengths, $\M$ is symmetric positive definite.
-
-\subsection{Diagonal Structure of the Gravitational Stiffness Matrix}
-\label{sec:diagonal}
-
-From the potential energy expansion (Eq.~(\ref{eq:U_quadratic})), the gravitational torque on joint $d$ is
-\[
-g_d = \frac{\partial U_{\text{quad}}}{\partial \theta_d}
-= g \left(\sum_{i=d}^{n} m_i\right) l_d \theta_d.
-\]
-Therefore the stiffness matrix $\K$ is diagonal:
-\begin{equation}\label{eq:Kjk}
-  K_{jk} = \left(\sum_{i=j}^{n} m_i\right) g l_j \,\delta_{jk}.
+This is the energy of a massless string loaded with beads $m_i$, whose segment $j$ has length $l_j$ and tension $\tau_j=gS_j$, the weight hanging below it. The equations of motion,
+\begin{equation}\label{eq:string}
+  m_i\ddot x_i=\frac{\tau_{i+1}}{l_{i+1}}(x_{i+1}-x_i)-\frac{\tau_i}{l_i}(x_i-x_{i-1}),\qquad \tau_{n+1}:=0,
 \end{equation}
-No off-diagonal entries appear because the quadratic potential contains only $\theta_j^2$ terms; the coordinate convention (angles measured from the downward vertical) eliminates $\theta_i\theta_j$ cross couplings.
+are exactly what Newton's law gives for the horizontal components of the rod tensions at small angles. Each mass is coupled only to its two neighbors, and the stiffness matrix in these coordinates is tridiagonal.
 
-Because $\M$ and $\K$ are symmetric positive definite for positive masses and lengths, the generalized eigenproblem admits an $\M$-orthonormal modal matrix $\mathbf{U}$:
-\begin{equation}\label{eq:modal-eigenproblem}
-  \K\mathbf{U}=\M\mathbf{U}\boldsymbol{\Omega}^{2},\qquad
-  \mathbf{U}\trans\M\mathbf{U}=\mathbf{I},\qquad
-  \mathbf{U}\trans\K\mathbf{U}=\boldsymbol{\Omega}^{2},
-\end{equation}
-where $\boldsymbol{\Omega}=\operatorname{diag}(\omega_1,\ldots,\omega_n)$. Since both $\M$ and $\K$ are positive definite, all natural frequencies are real and strictly positive, so there are neither zero-frequency rigid-body modes nor unstable roots. Moreover, the frequencies are simple, $0<\omega_1<\omega_2<\dots<\omega_n$ (Theorem~\ref{thm:spectrum} below). With $\boldsymbol{\theta}=\mathbf{U}\mathbf{q}$, the system decouples into $\ddot q_j+\omega_j^2q_j=0$, with the exact solution
-\begin{equation}\label{eq:modal-solution}
-  q_j(t)=q_j(0)\cos(\omega_j t)
-  +\frac{\dot q_j(0)}{\omega_j}\sin(\omega_j t).
-\end{equation}
-This is the natural direct solution for the unforced linear second-order problem and is used below as an independent numerical reference.
+The tridiagonal structure survives in the original angle coordinates, in a less obvious form. Inverting Eq.~(\ref{eq:factor}) and using the fact that $\E^{-1}$ takes backward differences (ones on the diagonal and $-1$ just below it), we obtain the following.
 
-\subsection{Closed-Form Inverse Mass Matrix and Tridiagonal Dynamic Matrix}
-\label{sec:tridiagonal}
-
-Although $\M$ is dense, its inverse is not. Throughout, $1/m_0:=0$ and entries not listed are zero.
-
-\begin{theorem}[Closed-form inverse mass matrix]\label{thm:inverse}
-For positive masses and lengths, $\M^{-1}$ is the symmetric tridiagonal matrix with
+\begin{theorem}[Tridiagonal inverse mass matrix]\label{thm:inverse}
+With $1/m_0:=0$, $\M^{-1}$ is symmetric and tridiagonal, with
 \begin{equation}\label{eq:Minv}
-  (\M^{-1})_{jj}=\frac{1}{l_j^{2}}\left(\frac{1}{m_j}+\frac{1}{m_{j-1}}\right),\qquad
-  (\M^{-1})_{j,j-1}=(\M^{-1})_{j-1,j}=-\frac{1}{m_{j-1}\,l_{j-1}\,l_j}.
+  (\M^{-1})_{kk}=\frac{1}{l_k^2}\Bigl(\frac{1}{m_k}+\frac{1}{m_{k-1}}\Bigr),\qquad
+  (\M^{-1})_{k,k-1}=(\M^{-1})_{k-1,k}=-\frac{1}{m_{k-1}l_{k-1}l_k}.
 \end{equation}
-\end{theorem}
-\begin{proof}
-By Eq.~(\ref{eq:M-factor}), $\M^{-1}=\mathbf{L}^{-1}\mathbf{E}^{-1}\mathbf{D}^{-1}\mathbf{E}^{-\mathsf{T}}\mathbf{L}^{-1}$. Since $\mathbf{E}$ forms cumulative sums, $\mathbf{E}^{-1}$ forms backward differences: it is lower bidiagonal with $(\mathbf{E}^{-1})_{jj}=1$ and $(\mathbf{E}^{-1})_{j,j-1}=-1$. Hence
-$(\mathbf{E}^{-1}\mathbf{D}^{-1}\mathbf{E}^{-\mathsf{T}})_{jk}=\sum_i(\mathbf{E}^{-1})_{ji}(\mathbf{E}^{-1})_{ki}/m_i$
-vanishes for $|j-k|>1$, equals $1/m_j+1/m_{j-1}$ for $k=j$ and $-1/m_{j-1}$ for $k=j-1$. Scaling by $\mathbf{L}^{-1}$ on both sides gives Eq.~(\ref{eq:Minv}).
-\end{proof}
-
-\begin{remark}
-The matrix $(S_{\max(j,k)})_{jk}=\mathbf{E}\trans\mathbf{D}\mathbf{E}$ is a single-pair (Green's) matrix, and the tridiagonality of inverses of such matrices is classical~\cite{gantmacher2002oscillation,meurant1992review}. To our knowledge, its explicit consequences for the $n$-mass pendulum stated below have not been exploited in the pendulum literature, where the dense $\M$ is assembled and factorized~\cite{yesilyurt2019equations,charles2019lagrangian,bondada2023dynamics}.
-\end{remark}
-
-\begin{corollary}[Tridiagonal dynamic matrix]\label{cor:Q}
-The dynamic matrix $\mathbf{Q}=\M^{-1}\K$ is tridiagonal with
+Consequently the dynamical matrix $\Q=\M^{-1}\K$, which governs $\ddot\btheta=-\Q\btheta$, is tridiagonal too:
 \begin{equation}\label{eq:Q}
-  Q_{jj}=\frac{g\,S_j}{l_j}\left(\frac{1}{m_j}+\frac{1}{m_{j-1}}\right),\qquad
-  Q_{j,j-1}=-\frac{g\,S_{j-1}}{m_{j-1}\,l_j},\qquad
-  Q_{j-1,j}=-\frac{g\,S_{j}}{m_{j-1}\,l_{j-1}}.
+  Q_{kk}=\frac{gS_k}{l_k}\Bigl(\frac{1}{m_k}+\frac{1}{m_{k-1}}\Bigr),\qquad
+  Q_{k,k-1}=-\frac{gS_{k-1}}{m_{k-1}\,l_k},\qquad
+  Q_{k-1,k}=-\frac{gS_k}{m_{k-1}\,l_{k-1}}.
 \end{equation}
-Consequently the state-space operator $\A$ is assembled in $\mathcal{O}(n)$ operations and storage, and $\A\Rstate$ costs $\mathcal{O}(n)$.
-\end{corollary}
-\begin{proof}
-Multiply Eq.~(\ref{eq:Minv}) on the right by the diagonal matrix $\K=g\operatorname{diag}(S_jl_j)$.
-\end{proof}
-
-Corollary~\ref{cor:Q} has a transparent physical meaning: in the linearized equations solved for the accelerations, link $j$ couples only to its neighbours $j\pm1$, as expected from a Newtonian picture in which each mass interacts only through the two adjacent rods, whose equilibrium tensions are $gS_j$ and $gS_{j+1}$. The dense coupling of $\M$ is an artifact of the absolute-angle Lagrangian description; it disappears upon inversion.
-
-\begin{theorem}[Spectral structure]\label{thm:spectrum}
-Let $\K^{1/2}=\operatorname{diag}\bigl(\sqrt{gS_jl_j}\bigr)$ and $\mathbf{J}=\K^{1/2}\M^{-1}\K^{1/2}$. Then:
-\begin{enumerate}
-  \item[(i)] $\mathbf{J}$ is symmetric tridiagonal with $J_{jj}=Q_{jj}$ and
-  \begin{equation}\label{eq:Jacobi}
-    J_{j,j-1}=J_{j-1,j}=-\frac{g\sqrt{S_{j-1}S_j}}{m_{j-1}\sqrt{l_{j-1}l_j}}<0;
-  \end{equation}
-  \item[(ii)] $\K\mathbf{u}=\omega^2\M\mathbf{u}$ if and only if $\mathbf{J}\mathbf{w}=\omega^2\mathbf{w}$ with $\mathbf{u}=\K^{-1/2}\mathbf{w}$;
-  \item[(iii)] all natural frequencies are simple: $0<\omega_1<\omega_2<\dots<\omega_n$;
-  \item[(iv)] the $k$-th mode shape $\mathbf{u}^{(k)}$ has exactly $k-1$ sign changes.
-\end{enumerate}
 \end{theorem}
+
 \begin{proof}
-(i) follows from Eq.~(\ref{eq:Minv}) and the diagonal form of $\K^{1/2}$. (ii) $\M^{-1}\K\mathbf{u}=\omega^2\mathbf{u}$ is equivalent to $\K^{1/2}\M^{-1}\K^{1/2}(\K^{1/2}\mathbf{u})=\omega^2\K^{1/2}\mathbf{u}$. (iii) $\mathbf{J}$ is congruent to $\M^{-1}$, hence positive definite. Because every off-diagonal entry is non-zero, the rows of $\mathbf{J}\mathbf{w}=\lambda\mathbf{w}$ form a three-term recurrence that determines $\mathbf{w}$ uniquely from $w_1$; every eigenspace is therefore one-dimensional, and since $\mathbf{J}$ is symmetric all eigenvalues are simple. (iv) For a Jacobi matrix with negative off-diagonal entries, the eigenvector of the $k$-th smallest eigenvalue has exactly $k-1$ sign changes~\cite[Ch.~II]{gantmacher2002oscillation}; multiplication by the positive diagonal matrix $\K^{-1/2}$ preserves signs.
+$\M^{-1}=\Lm^{-1}\E^{-1}\D^{-1}\E^{-\mathsf{T}}\Lm^{-1}$, and the entries of $\E^{-1}\D^{-1}\E^{-\mathsf{T}}$ vanish unless $|k-r|\le1$; they equal $1/m_k+1/m_{k-1}$ on the diagonal and $-1/m_{k-1}$ next to it. Multiplying on the right by the diagonal matrix $\K$ gives $\Q$.
 \end{proof}
 
-\begin{remark}[Numerical aspects]
-High-frequency modes are strongly localized: for random chains with $n\approx 20$--$40$ some components fall below $10^{-20}$ relative to the largest, so the sign pattern in (iv) cannot be resolved in double precision. We verified (iv) in 80-digit arithmetic for 849 modes of 60 random chains ($2\le n\le24$) with no exception. Eigenvalues computed from $\mathbf{J}$ with a tridiagonal solver are not affected by this localization.
-\end{remark}
+For the uniform double pendulum ($m_k=l_k=1$), Eq.~(\ref{eq:Q}) gives $\Q=g\begin{pmatrix}2&-1\\-2&2\end{pmatrix}$, whose eigenvalues reproduce the textbook frequencies $\omega^2=(2\pm\sqrt2)\,g$. The matrix $\E\T\D\E$ is an example of what Gantmacher and Krein call a single-pair matrix, and the tridiagonality of the inverses of such matrices is classical.\cite{gantmacher2002oscillation,meurant1992review} Theorem~\ref{thm:inverse} has a practical side, too: the linear equations can be set up and advanced in time with work proportional to $n$, without ever forming or factorizing the dense matrix $\M$. Even the kinetic energy needs only a running sum, $\frac12\dot\btheta\T\M\dot\btheta=\frac12\sum_i m_i(\sum_{k\le i}l_k\dot\theta_k)^2$.
 
-\begin{algorithm}[htbp]
-  \caption{$\mathcal{O}(n)$ assembly of the dynamic and Jacobi matrices}
-  \label{alg:tridiagonal}
-  \begin{algorithmic}[1]
-    \Require masses $m_1,\ldots,m_n$, lengths $l_1,\ldots,l_n$, $g$
-    \Ensure tridiagonal $\mathbf{Q}=\M^{-1}\K$ and Jacobi matrix $\mathbf{J}$
-    \State $S_n \gets m_n$; \textbf{for} $j\gets n-1$ \textbf{down to} $1$: $S_j\gets m_j+S_{j+1}$
-    \For{$j \gets 1$ \textbf{to} $n$}
-      \State $Q_{jj}\gets J_{jj}\gets g S_j\,(1/m_j+1/m_{j-1})/l_j$ \Comment{$1/m_0:=0$}
-      \If{$j>1$}
-        \State $Q_{j,j-1}\gets -gS_{j-1}/(m_{j-1}l_j)$;\quad $Q_{j-1,j}\gets -gS_j/(m_{j-1}l_{j-1})$
-        \State $J_{j,j-1}\gets J_{j-1,j}\gets -g\sqrt{S_{j-1}S_j}/(m_{j-1}\sqrt{l_{j-1}l_j})$
-      \EndIf
-    \EndFor
-  \end{algorithmic}
-\end{algorithm}
+\section{Normal modes and the hanging chain}
+\label{sec:modes}
 
-All natural frequencies then follow from a symmetric tridiagonal eigensolver in $\mathcal{O}(n^2)$ operations, and any selected subset (e.g.\ the lowest $p$ modes, by bisection) in $\mathcal{O}(np)$, compared with $\mathcal{O}(n^3)$ for the dense generalized eigenproblem.
-
-\subsection{State-Space Representation and Control Readiness}
-
-Define the state vector $\Rstate(t) = (\boldsymbol{\theta}(t), \dot{\boldsymbol{\theta}}(t))\trans \in \R^{2n}$.  The linearized system can then be written as
-\begin{equation}
-\dot{\Rstate} = \A \Rstate, \qquad
-\A = \begin{pmatrix}
-\mathbf{0} & \mathbf{I} \\
--\M^{-1}\K & \mathbf{0}
-\end{pmatrix},
+Because $\K$ is diagonal and positive, $\Q$ is similar to the symmetric matrix $\J=\K^{1/2}\M^{-1}\K^{1/2}$, whose diagonal equals that of $\Q$ and whose off-diagonal entries are
+\begin{equation}\label{eq:J}
+  J_{k,k-1}=J_{k-1,k}=-\frac{g\sqrt{S_{k-1}S_k}}{m_{k-1}\sqrt{l_{k-1}l_k}}<0 .
 \end{equation}
-whose lower-left block is the tridiagonal matrix $-\mathbf{Q}$ of Corollary~\ref{cor:Q}.
-The matrix $\A$ is constant and possesses purely imaginary conjugate eigenvalue pairs $\pm i\omega_j$, reflecting the undamped Hamiltonian structure of small oscillations. This first-order form is not required for the modal solution; it is retained because a reusable transition operator is directly compatible with modern state-space control frameworks, observer/Kalman filter design, and linear-quadratic regulation (LQR) where input matrices $\mathbf{B}_u$ are coupled to the equations of motion.
-
-\section{Operator-Based Dynamic Propagation}
-\label{sec:operator}
-
-\subsection{Peano-Baker Series for the Transition Matrix}
-
-Because $\A$ is constant, the state transition matrix from $0$ to $t$
-is the matrix exponential $\Phi(t,0)=e^{\A t}$.
-
-For the autonomous system considered here, the Peano--Baker series is
-exactly the Taylor series of the matrix exponential; the distinction
-becomes relevant only for time-dependent operators, where the
-Peano--Baker and Magnus expansions differ~\cite{magnus1954exponential,blanes2009magnus}.  A direct truncated
-Taylor series can be inaccurate when $\|\A\Delta t\|$ is large
-\cite{moler2003nineteen}, so the implementation uses scaling and squaring.
-
-A convenient implementation defines $\mathbf{X}=\A\Delta t$ and chooses
-$s=\max\{0,\lceil\log_2(\|\mathbf{X}\|_{\infty}/\eta)\rceil\}$ with
-$\eta=1/2$.  For $\mathbf{B}=\mathbf{X}/2^s$, the approximation is
-\begin{equation}\label{eq:peano-truncated}
-  \Phi(\Delta t) \approx
-  \left(\sum_{k=0}^{N} \frac{\mathbf{B}^k}{k!}\right)^{2^s}.
-\end{equation}
-Scaling controls the Taylor remainder before repeated squaring.  With $N=20$, the tested systems agree with both \texttt{scipy.linalg.expm} and the modal solution to double-precision round-off.  This implementation is included for transparency; robust library routines based on established matrix-exponential algorithms, such as scaling and squaring with Pad\'e approximants~\cite{higham2005scaling}, should be preferred outside the tested parameter range.
-
-\subsection{Propagation Algorithm and Reusability}
-
-Once $\Phi(\Delta t)$ is precomputed (using the scaled series), the linear propagation over a time step is simply
+A symmetric tridiagonal matrix with non-zero off-diagonal entries is called a Jacobi matrix, and its properties are classical.\cite{gantmacher2002oscillation} Two of them are worth deriving in class. First, the eigenvalues are simple: the rows of $\J\mathbf{w}=\lambda\mathbf{w}$ form a three-term recurrence that fixes $\mathbf{w}$ once $w_1$ is chosen, so every eigenspace is one-dimensional. Hence
 \[
-\Rstate(t+\Delta t) = \Phi(\Delta t) \Rstate(t).
+0<\omega_1<\omega_2<\dots<\omega_n
 \]
-This requires only matrix-vector multiplications, making it highly efficient for repeated time stepping. Importantly, because $\Phi(\Delta t)$ is constant for fixed system parameters and time step, it can be precomputed once and reused across many simulations (e.g., parameter sweeps, Monte Carlo runs, or real-time control loops). This reusability is a key practical advantage of the operator-based formulation.
+for every choice of masses and lengths; the multiple pendulum never has degenerate modes. Second, because the off-diagonal entries are negative, the eigenvector of the $k$-th smallest eigenvalue has exactly $k-1$ sign changes,\cite{gantmacher2002oscillation} and since $\mathbf{u}=\K^{-1/2}\mathbf{w}$ the same holds for the angle mode shapes. The same argument applied to the beaded string of Eq.~(\ref{eq:string}), whose symmetrized stiffness matrix $\D^{-1/2}\K_x\D^{-1/2}$ is again a Jacobi matrix with negative off-diagonal entries, shows that in terms of the horizontal displacements mode $k$ also crosses the vertical through the pivot $k-1$ times, as for a vibrating string.
 
-\subsection{Structure-Preserving \texorpdfstring{$\mathcal{O}(n)$}{O(n)} Time Stepping}
-\label{sec:verlet}
+For a uniform chain of total mass $m_{\mathrm{tot}}$ and length $L$ ($m_k=m_{\mathrm{tot}}/n$, $l_k=L/n$), Eq.~(\ref{eq:string}) is a finite-difference version of the hanging-chain equation $\partial_t^2u=\partial_z(gz\,\partial_zu)$, where $z$ is the height above the free end. Its modes are $u_k(z)=J_0\bigl(j_{0,k}\sqrt{z/L}\bigr)$, with frequencies $\omega_k=\tfrac12 j_{0,k}\sqrt{g/L}$, where $j_{0,k}$ is the $k$-th zero of the Bessel function $J_0$.\cite{verbin2015boundary} Figure~\ref{fig:modes}(b) shows that the discrete frequencies converge to these values with a relative error that is, to plotting accuracy, $1/(4n)$, the discrete frequencies being the lower ones. Since $\omega\propto L^{-1/2}$, this is the frequency of a continuous chain lengthened by half a link, $L+l/2$ with $l=L/n$. The same correction also accounts for the mode shapes: for $n=40$, the largest difference between the discrete displacements and the continuum modes of length $L$ is $0.001$, $0.04$, $0.12$ and $0.25$ for the first four modes (normalizing both to one at the free end), but only $<10^{-3}$, $0.001$, $0.007$ and $0.03$ against the continuum of length $L+l/2$ [Fig.~\ref{fig:modes}(a)]. We give this as a numerical observation and leave a heuristic explanation to the reader (Problem~4).
 
-The transition matrix $\Phi(\Delta t)$ is dense: each step costs $\mathcal{O}(n^2)$, its computation $\mathcal{O}(n^3)$, and its storage $8(2n)^2$ bytes. For large $n$ the tridiagonal form of Corollary~\ref{cor:Q} offers a cheaper route. Writing the linear equations as $\ddot{\boldsymbol\theta}=-\mathbf{Q}\boldsymbol\theta$, the St\"ormer--Verlet (leapfrog) scheme reads
-\begin{equation}\label{eq:verlet}
-  \dot{\boldsymbol\theta}^{k+1/2}=\dot{\boldsymbol\theta}^{k}-\tfrac{\Delta t}{2}\mathbf{Q}\boldsymbol\theta^{k},\qquad
-  \boldsymbol\theta^{k+1}=\boldsymbol\theta^{k}+\Delta t\,\dot{\boldsymbol\theta}^{k+1/2},\qquad
-  \dot{\boldsymbol\theta}^{k+1}=\dot{\boldsymbol\theta}^{k+1/2}-\tfrac{\Delta t}{2}\mathbf{Q}\boldsymbol\theta^{k+1}.
-\end{equation}
-Each step requires one tridiagonal product, i.e.\ $\mathcal{O}(n)$ operations, with no precomputation beyond Algorithm~\ref{alg:tridiagonal}. The scheme is second order, symplectic and time-reversible; for linear systems it is stable for $\Delta t\,\omega_n<2$, and its energy error then remains bounded, without secular drift~\cite{hairer2006geometric}. The largest frequency $\omega_n$ is obtained in $\mathcal{O}(n)$ operations by bisection on the Jacobi matrix $\mathbf{J}$.
-
-Monitoring the energy also does not require the dense $\M$. By Eq.~(\ref{eq:M-factor}),
-\begin{equation}\label{eq:energy-On}
-  \tfrac12\dot{\boldsymbol\theta}\trans\M\dot{\boldsymbol\theta}
-  =\tfrac12\sum_{i=1}^{n} m_i\Bigl(\sum_{k\le i} l_k\dot\theta_k\Bigr)^{2},
-\end{equation}
-which is the kinetic energy written with the linearized horizontal velocity $\sum_{k\le i}l_k\dot\theta_k$ of mass $i$, and is evaluated in $\mathcal{O}(n)$ operations by a cumulative sum; the potential energy $\tfrac12\boldsymbol\theta\trans\K\boldsymbol\theta$ is diagonal.
-
-Two limitations should be stated. First, Verlet is not exact: its phase and energy errors are $\mathcal{O}(\Delta t^2)$, whereas $\Phi(\Delta t)$ is exact up to round-off. Second, the stability bound ties $\Delta t$ to $\omega_n$, which grows as a uniform chain is refined, so the total cost of simulating a fixed time interval grows faster than linearly in $n$. The two methods are therefore complementary: $\Phi$ for small and moderate $n$ when maximal accuracy is required, Verlet when $n$ is too large for dense matrices.
-
-\section{Numerical Validation (Linear Regime)}
-\label{sec:validation}
-
-\subsection{Linear Validation}
-
-To ensure a comprehensive evaluation and guarantee reproducibility, the linear framework was validated across four distinct test cases. In all scenarios, the gravitational acceleration was set to $g = 9.81$ m/s$^2$ and the systems were released from rest ($\dot{\boldsymbol{\theta}}(0) = \mathbf{0}$). The specific parameter sets--masses $m$ (in kg), lengths $l$ (in m), and initial angular displacements $\boldsymbol{\theta}(0)$ (in radians)--are defined as follows:
-\begin{itemize}
-  \item \textbf{$n=2$ (uniform):} $m_i = 1.0$, $l_i = 1.0$, and $\boldsymbol{\theta}(0) = [0.1, 0.05]\trans$.
-  \item \textbf{$n=3$ (uniform):} $m_i = 1.0$, $l_i = 1.0$, and $\boldsymbol{\theta}(0) = [0.1, 0.05, 0.02]\trans$.
-  \item \textbf{$n=3$ (non-uniform):} $m = [2.0, 1.5, 0.8]\trans$, $l = [1.2, 0.9, 0.6]\trans$, and $\boldsymbol{\theta}(0) = [0.1, 0.05, 0.02]\trans$.
-  \item \textbf{$n=5$ (uniform):} $m_i = 1.0$, $l_i = 1.0$, and $\boldsymbol{\theta}(0) = [0.1, 0.05, 0.02, 0.01, 0.005]\trans$.
-\end{itemize}
-
-These configurations provide a baseline for verifying the assembly and propagation across varying dimensionalities and inertial distributions. The scaled Peano--Baker series was truncated at $N = 20$ with a time step of $\Delta t = 0.01$ s. Reference solutions were generated both by direct matrix exponentiation (\texttt{scipy.linalg.expm}) and by the generalized-eigenvalue solution in Eq.~(\ref{eq:modal-solution}).
-
-\begin{figure}[htbp]
+\begin{figure}[t]
   \centering
-  \includegraphics[width=0.8\textwidth]{figures/linear_validation.png}
-  \caption{Linear validation results for the evaluated configurations. Left column: time-domain trajectories showing scaled-series stepping (dashed) versus the reference matrix exponential (solid). Right column: absolute algorithmic error confirming double-precision agreement.}
-  \label{fig:linear_validation}
+  \includegraphics[width=\textwidth]{figures/modes.png}
+  \caption{(a) First four normal modes of a uniform chain of $n=40$ masses, plotted as the horizontal displacements of the masses (dots), compared with the modes of a continuous hanging chain of length $L+l/2$ (lines). Mode $k$ has $k-1$ nodes. (b) Relative error of the three lowest frequencies with respect to the hanging chain, $\omega_k=\frac12 j_{0,k}\sqrt{g/L}$; the dashed line is $1/(4n)$.}
+  \label{fig:modes}
 \end{figure}
 
-Table~\ref{tab:linear-errors} confirms that both independent solution paths agree with the reference matrix exponential at the level of double-precision round-off.  The individual digits at this level depend on the platform and BLAS implementation; independent reruns give errors of the same order (below $2\times10^{-14}$).
-
-\begin{table}[htbp]
-  \centering
-  \caption{Maximum absolute error in $\theta_1(t)$ over $t \in [0, 8]$ s (reference: \texttt{scipy.linalg.expm}).}
-  \label{tab:linear-errors}
-  \begin{tabular}{ccccc}
-    \toprule
-    \textbf{System} & \textbf{Parameters}
-    & $\Delta t$ (s)
-    & \textbf{Scaled series} & \textbf{Modal solution} \\
-    \midrule
-    $n=2$ & uniform     & $0.01$ & $6.88 \times 10^{-15}$ & $9.71 \times 10^{-16}$ \\
-    $n=3$ & uniform     & $0.01$ & $2.75 \times 10^{-15}$ & $1.57 \times 10^{-15}$ \\
-    $n=3$ & non-uniform & $0.01$ & $1.60 \times 10^{-15}$ & $8.19 \times 10^{-16}$ \\
-    $n=5$ & uniform     & $0.01$ & $9.28 \times 10^{-15}$ & $1.31 \times 10^{-15}$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\subsection{Closed-Form Structure: Cost, Accuracy and the Continuum Limit}
-\label{sec:structure-validation}
-
-Figure~\ref{fig:structure} and Table~\ref{tab:structure} compare the closed-form tridiagonal route with the dense route on chains with random masses $m_j\in[0.5,2]$ and lengths $l_j\in[0.5,2]/n$. The dense route forms $\M$ and $\K$ with vectorized operations, obtains $\M^{-1}\K$ by an LU solve and the frequencies with the generalized symmetric eigensolver \texttt{scipy.linalg.eigh(K, M)}; the tridiagonal route uses Eq.~(\ref{eq:Q}) and \texttt{scipy.linalg.eigh\_tridiagonal} applied to $\mathbf{J}$. Timings are best-of-several wall times on a single thread of an Intel Xeon processor at 2.3~GHz (NumPy 2.5); absolute values are platform dependent, but the scaling is not. Accuracy is measured by the largest relative eigenpair residual $\|\mathbf{Q}\mathbf{u}_i-\omega_i^2\mathbf{u}_i\|/(\omega_i^2\|\mathbf{u}_i\|)$, evaluated with the exact $\mathcal{O}(n)$ operator of Eq.~(\ref{eq:Q}).
-
-Forming $\mathbf{Q}$ takes about $10^{-5}$--$10^{-3}$\,s up to $n=10^5$, whereas the dense solve already takes $1.3$\,s at $n=3000$, a factor of about $3.5\times10^{4}$. The full spectrum is about 50 times faster at $n=3000$ and remains affordable at $n=3\times10^4$, where the dense eigenproblem is out of reach. The tridiagonal route is also more accurate: the dense residual grows with the condition number of $\M$ (Section~\ref{sec:validation}) and reaches $10^{-4}$ at $n=3000$, about four orders of magnitude above the tridiagonal one.
-
-As an independent, non-circular check, a uniform chain of total mass $m_{\mathrm{tot}}$ and length $L$ ($m_j=m_{\mathrm{tot}}/n$, $l_j=L/n$) is compared with the continuous hanging chain, whose natural frequencies are the classical values $\omega_k=\tfrac12 j_{0,k}\sqrt{g/L}$~\cite{verbin2015boundary}, with $j_{0,k}$ the $k$-th zero of the Bessel function $J_0$. The three lowest frequencies converge at rate $\mathcal{O}(n^{-1})$ (Figure~\ref{fig:structure}c); empirically the relative error is very close to $1/(4n)$ for large $n$ (e.g.\ $3.05\times10^{-5}$ at $n=8192$).
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\textwidth]{figures/structure_scaling.png}
-  \caption{(a) Wall time to form $\mathbf{Q}=\M^{-1}\K$: dense LU solve versus the closed form of Corollary~\ref{cor:Q}. (b) Wall time for all natural frequencies: dense generalized eigensolver versus the tridiagonal Jacobi form of Theorem~\ref{thm:spectrum}. (c) Relative error of the three lowest frequencies of a uniform $n$-mass chain with respect to the continuous hanging chain.}
-  \label{fig:structure}
-\end{figure}
-
-\begin{table}[htbp]
-  \centering
-  \caption{Cost (s) and largest relative eigenpair residual of the dense and closed-form tridiagonal routes (random chains, single thread).}
-  \label{tab:structure}
-  \begin{tabular}{rcccccc}
-    \toprule
-    & \multicolumn{2}{c}{Forming $\mathbf{Q}$} & \multicolumn{2}{c}{All frequencies} & \multicolumn{2}{c}{Residual} \\
-    \cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
-    $n$ & dense & closed form & dense & tridiagonal & dense & tridiagonal \\
-    \midrule
-    100    & $1.9\times10^{-4}$ & $1.1\times10^{-5}$ & $4.6\times10^{-4}$ & $1.6\times10^{-4}$ & $9.2\times10^{-10}$ & $8.0\times10^{-12}$ \\
-    1000   & $7.4\times10^{-2}$ & $1.9\times10^{-5}$ & $1.8\times10^{-1}$ & $1.0\times10^{-2}$ & $2.7\times10^{-6}$ & $1.4\times10^{-9}$ \\
-    3000   & $1.3$              & $3.6\times10^{-5}$ & $4.5$              & $9.0\times10^{-2}$ & $1.1\times10^{-4}$ & $1.7\times10^{-8}$ \\
-    30000  & --                 & $3.3\times10^{-4}$ & --                 & $6.7$              & --                 & -- \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\subsection{Structure-Preserving \texorpdfstring{$\mathcal{O}(n)$}{O(n)} Time Stepping}
-\label{sec:verlet-validation}
-
-Figure~\ref{fig:symplectic} evaluates the integrator of Section~\ref{sec:verlet}. For the non-uniform $n=3$ pendulum over $10^6$ steps (panel a), the relative energy error of Verlet oscillates without growth: its maximum is $2.0\times10^{-4}$ in the first tenth of the run and $2.4\times10^{-4}$ in the last tenth for $\Delta t=0.01$\,s, and it decreases fourfold when $\Delta t$ is halved. The transition matrix is far more accurate, but its round-off error accumulates linearly, from $1.1\times10^{-12}$ to $1.2\times10^{-11}$ over the same run. Against the exact modal solution, the Verlet error at $t=8$\,s decreases as $\Delta t^2$ (panel b).
-
-Panel (c) compares the cost per step on random chains, with $\Delta t=0.5/\omega_n$. The Verlet step is cheaper than the dense matrix--vector product from $n\approx100$; at $n=2000$ it takes $8.6\times10^{-6}$\,s against $7.0\times10^{-3}$\,s, a factor of about 800, to which the dense route adds $10.7$\,s to compute $\Phi$ and 128\,MB to store it. Verlet remains practical at $n=10^6$ ($9.4\times10^{-3}$\,s per step), where $\Phi$ would require about 32\,TB.
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\textwidth]{figures/symplectic.png}
-  \caption{St\"ormer--Verlet on the closed-form tridiagonal system. (a) Relative energy error over $10^6$ steps for the non-uniform $n=3$ pendulum, compared with repeated application of the transition matrix. (b) Error at $t=8$\,s against the exact modal solution. (c) Wall time per step on a single thread, Verlet versus the dense transition matrix.}
-  \label{fig:symplectic}
-\end{figure}
-
-\subsection{Nonlinear Sign and Energy Check}
-
-Although the main numerical study is linear, the sign in the exact velocity vector was checked directly using the double-pendulum parameters $m_1=m_2=l_1=l_2=1$, $g=9.81$, $\theta_1(0)=5^{\circ}$, $\theta_2(0)=0$, and zero initial velocities.  The exact nonlinear equations were integrated over $0\le t\le6$ with the DOP853 Runge--Kutta method~\cite{hairer1993solving} using relative and absolute tolerances $10^{-12}$ and $10^{-14}$, respectively.  Table~\ref{tab:energy-sign} shows the maximum drift in the physical energy $T+U$.  With the velocity-squared term as derived, the drift remains at round-off.  As a negative control, inserting a spurious index-dependent sign (a plausible transcription error that flips the term for $k<d$) produces a $10^{-4}$-level drift, showing that the energy test is sensitive to this kind of error.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Maximum absolute energy drift in the nonlinear double-pendulum sign check.}
-  \label{tab:energy-sign}
-  \begin{tabular}{lc}
-    \toprule
-    \textbf{Velocity-squared term} & $\max_t |E(t)-E(0)|$ \\
-    \midrule
-    As derived, $\sin(\theta_d-\theta_k)$ & $3.55 \times 10^{-15}$ \\
-    Negative control (spurious sign for $k<d$) & $2.26 \times 10^{-4}$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\subsection{Consistency Check with RK4}
-
-For completeness, the state-space implementation was also checked against classical fourth-order Runge--Kutta (RK4)~\cite{hairer1993solving} on the same linear system.  RK4 is a general-purpose time-stepper rather than a method tailored to this constant linear problem, so this comparison is only a discretization consistency check; the modal solution is the more appropriate direct baseline. Table~\ref{tab:comparison} reports errors for a moderately large time step and for a ten-times-smaller RK4 step.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Consistency check for the $n=3$ non-uniform pendulum (linear regime).}
-  \label{tab:comparison}
-  \begin{tabular}{lcc}
-    \toprule
-    \textbf{Method} & $\Delta t$ (s) & \textbf{Max error (rad)} \\
-    \midrule
-    Scaled series ($N=20$) & $0.1$ & $9.62 \times 10^{-15}$ \\
-    RK4 & $0.1$ & $9.19 \times 10^{-4}$ \\
-    RK4 & $0.01$ & $9.42 \times 10^{-8}$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-The scaled-series result demonstrates agreement with the matrix exponential after a fixed precomputation.  It does not imply general superiority over Runge--Kutta methods, which are designed for a broader class of nonlinear and nonautonomous problems.
-
-\section{Exact Nonlinear Dynamics in \texorpdfstring{$\mathcal{O}(n)$}{O(n)}}
+\section{Exact nonlinear dynamics: tensions}
 \label{sec:nonlinear}
 
-The tridiagonal structure is not restricted to small oscillations. Evaluating the exact accelerations from $\M(\boldsymbol\theta)\ddot{\boldsymbol\theta}+\mathbf{c}+\mathbf{g}=\mathbf{0}$ by forming and factorizing the dense $\M(\boldsymbol\theta)$ costs $\mathcal{O}(n^3)$ operations per evaluation. Recursive multibody algorithms reach $\mathcal{O}(n)$ for general serial chains~\cite{featherstone2008rigid,jain2011robot}; for a chain of point masses, a Newtonian formulation with the rod tensions as unknowns gives an explicit alternative that requires a single tridiagonal solve and connects directly to Theorem~\ref{thm:inverse}.
-
-\subsection{Tension Formulation}
-
-Let $\mathbf{e}_k=(\sin\theta_k,-\cos\theta_k)$ be the unit vector along link $k$, from mass $k-1$ to mass $k$ (mass $0$ is the pivot), $\mathbf{n}_k=(\cos\theta_k,\sin\theta_k)$ its normal, $\hat{\mathbf{y}}$ the upward unit vector, and $T_k$ the tension of rod $k$, with $T_{n+1}:=0$. Newton's law for mass $i$ and the kinematics of link $k$ read
+At large amplitudes the equations become $\M(\btheta)\ddot\btheta+\mathbf{c}(\btheta,\dot\btheta)+\mathbf{g}(\btheta)=\mathbf{0}$ with the dense, angle-dependent $\M(\btheta)$ of Sec.~\ref{sec:eom}. The beaded-string picture suggests a different route: write Newton's law for each mass, with the rod tensions $\tau_k$ as unknowns, as in Preston's treatment of chains.\cite{preston2011motion} Let $\mathbf{e}_k=(\sin\theta_k,-\cos\theta_k)$ be the unit vector along rod $k$, pointing from mass $k-1$ to mass $k$ (mass $0$ is the pivot), and $\mathbf{n}_k=(\cos\theta_k,\sin\theta_k)$ its normal. Then
 \begin{equation}\label{eq:newton}
-  m_i\ddot{\mathbf{r}}_i=-T_i\mathbf{e}_i+T_{i+1}\mathbf{e}_{i+1}-m_i g\,\hat{\mathbf{y}},\qquad
-  \ddot{\mathbf{r}}_k-\ddot{\mathbf{r}}_{k-1}=l_k\ddot\theta_k\,\mathbf{n}_k-l_k\dot\theta_k^{2}\,\mathbf{e}_k,
+  m_i\ddot{\mathbf{r}}_i=-\tau_i\mathbf{e}_i+\tau_{i+1}\mathbf{e}_{i+1}-m_ig\hat{\mathbf{y}},\qquad
+  \ddot{\mathbf{r}}_k-\ddot{\mathbf{r}}_{k-1}=l_k\ddot\theta_k\,\mathbf{n}_k-l_k\dot\theta_k^{2}\,\mathbf{e}_k ,
 \end{equation}
-with $\ddot{\mathbf{r}}_0=\mathbf{0}$.
+with $\tau_{n+1}=0$ and $\ddot{\mathbf{r}}_0=\mathbf{0}$. Dividing the first equation by $m_i$, subtracting it for consecutive masses and projecting the result on $\mathbf{e}_k$ and $\mathbf{n}_k$ gives the following.
 
-\begin{theorem}[Exact nonlinear dynamics in $\mathcal{O}(n)$]\label{thm:tension}
-For any state $(\boldsymbol\theta,\dot{\boldsymbol\theta})$, the tensions solve $\mathbf{B}(\boldsymbol\theta)\mathbf{T}=\mathbf{r}$, where $\mathbf{B}(\boldsymbol\theta)$ is symmetric positive definite and tridiagonal,
+\begin{theorem}[Tension formulation]\label{thm:tension}
+The tensions solve the symmetric, positive-definite, tridiagonal system $\B(\btheta)\boldsymbol{\tau}=\mathbf{r}$,
 \begin{equation}\label{eq:tension}
   B_{kk}=\frac{1}{m_k}+\frac{1}{m_{k-1}},\qquad
   B_{k,k+1}=B_{k+1,k}=-\frac{\cos(\theta_{k+1}-\theta_k)}{m_k},\qquad
   r_k=l_k\dot\theta_k^{2}+g\cos\theta_1\,\delta_{k1},
 \end{equation}
-with $1/m_0:=0$ and $\mathbf{B}(\mathbf{0})=(\mathbf{E}\trans\mathbf{D}\mathbf{E})^{-1}$. The angular accelerations are then given explicitly by
-\begin{equation}\label{eq:nl-acc}
-  l_k\ddot\theta_k=\frac{T_{k+1}\sin(\theta_{k+1}-\theta_k)}{m_k}-\frac{T_{k-1}\sin(\theta_k-\theta_{k-1})}{m_{k-1}}-g\sin\theta_1\,\delta_{k1}.
+and the angular accelerations then follow explicitly:
+\begin{equation}\label{eq:acc}
+  l_k\ddot\theta_k=\frac{\tau_{k+1}\sin(\theta_{k+1}-\theta_k)}{m_k}-\frac{\tau_{k-1}\sin(\theta_k-\theta_{k-1})}{m_{k-1}}-g\sin\theta_1\,\delta_{k1}.
 \end{equation}
-Both steps cost $\mathcal{O}(n)$ operations.
 \end{theorem}
+
 \begin{proof}
-Dividing Eq.~(\ref{eq:newton}) for masses $k$ and $k-1$ by their masses and subtracting (for $k=1$, using $\ddot{\mathbf{r}}_0=\mathbf{0}$) gives
-$l_k\ddot\theta_k\mathbf{n}_k-l_k\dot\theta_k^2\mathbf{e}_k=(-T_k\mathbf{e}_k+T_{k+1}\mathbf{e}_{k+1})/m_k-(-T_{k-1}\mathbf{e}_{k-1}+T_k\mathbf{e}_k)/m_{k-1}-g\hat{\mathbf{y}}\,\delta_{k1}$.
-Taking the scalar product with $\mathbf{e}_k$ and using $\mathbf{e}_j\cdot\mathbf{e}_k=\cos(\theta_j-\theta_k)$, $\mathbf{n}_k\cdot\mathbf{e}_k=0$ and $\hat{\mathbf{y}}\cdot\mathbf{e}_1=-\cos\theta_1$ yields Eq.~(\ref{eq:tension}); the product with $\mathbf{n}_k$, using $\mathbf{e}_j\cdot\mathbf{n}_k=\sin(\theta_j-\theta_k)$ and $\hat{\mathbf{y}}\cdot\mathbf{n}_1=\sin\theta_1$, yields Eq.~(\ref{eq:nl-acc}). Moreover, $\mathbf{B}=\hat{\mathbf{G}}\boldsymbol{\mathcal{M}}^{-1}\hat{\mathbf{G}}\trans$, where $\boldsymbol{\mathcal{M}}=\operatorname{diag}(m_i\mathbf{I}_2)$ and row $k$ of $\hat{\mathbf{G}}\in\R^{n\times2n}$ contains $\mathbf{e}_k\trans$ in block $k$ and $-\mathbf{e}_k\trans$ in block $k-1$. Since $\hat{\mathbf{G}}$ is block lower bidiagonal with non-zero diagonal blocks, it has full row rank and $\mathbf{B}$ is positive definite. At $\boldsymbol\theta=\mathbf{0}$ all cosines equal one and $\mathbf{B}(\mathbf{0})=\mathbf{E}^{-1}\mathbf{D}^{-1}\mathbf{E}^{-\mathsf{T}}$, as in the proof of Theorem~\ref{thm:inverse}.
+The projections use $\mathbf{e}_j\cdot\mathbf{e}_k=\cos(\theta_j-\theta_k)$, $\mathbf{e}_j\cdot\mathbf{n}_k=\sin(\theta_j-\theta_k)$, $\hat{\mathbf{y}}\cdot\mathbf{e}_1=-\cos\theta_1$ and $\hat{\mathbf{y}}\cdot\mathbf{n}_1=\sin\theta_1$. Positive definiteness follows from $\B=\mathbf{G}\boldsymbol{\mathcal{M}}^{-1}\mathbf{G}\T$, where $\boldsymbol{\mathcal{M}}=\operatorname{diag}(m_i\mathbf{I}_2)$ and row $k$ of $\mathbf{G}$ contains $\mathbf{e}_k\T$ in the block of mass $k$ and $-\mathbf{e}_k\T$ in the block of mass $k-1$. Since every $\mathbf{e}_k$ is a unit vector, $\mathbf{G}$ is block lower bidiagonal with non-zero diagonal blocks and therefore has full row rank.
 \end{proof}
 
-\begin{corollary}[Consistency with the linear theory]\label{cor:linear-limit}
-At rest, $T_k=gS_k$, the weight suspended below rod $k$. Linearizing Eq.~(\ref{eq:nl-acc}) about rest gives $\ddot{\boldsymbol\theta}=-\mathbf{Q}\boldsymbol\theta$, with $\mathbf{Q}$ the tridiagonal matrix of Corollary~\ref{cor:Q}.
+The tensions are those of rigid rods and can become negative (compression) in violent motions, which a rope or chain could not sustain (Problem~6).
+
+\begin{corollary}[The linear theory as the zero-angle limit]\label{cor:link}
+At $\btheta=\mathbf{0}$ all cosines equal one, and
+\[
+  \B(\mathbf{0})=\E^{-1}\D^{-1}\E^{-\mathsf{T}}=\Lm\,\M^{-1}\Lm .
+\]
+At rest $\boldsymbol{\tau}=g\,\E\T\D\E\,\hat{\mathbf{e}}_1$, so $\tau_k=gS_k$, which are the beaded-string tensions of Sec.~\ref{sec:string}. Linearizing Eq.~(\ref{eq:acc}) about rest gives $\ddot\btheta=-\Q\btheta$ with $\Q$ of Eq.~(\ref{eq:Q}).
 \end{corollary}
+
 \begin{proof}
-At rest $\mathbf{r}=g\,\mathbf{e}^{(1)}$, so $\mathbf{T}=g\,\mathbf{E}\trans\mathbf{D}\mathbf{E}\,\mathbf{e}^{(1)}$, whose $k$-th entry is $gS_{\max(k,1)}=gS_k$. Since $\dot\theta_k^2$ and $T_k-gS_k$ are of second order, to first order $l_k\ddot\theta_k=gS_{k+1}(\theta_{k+1}-\theta_k)/m_k-gS_{k-1}(\theta_k-\theta_{k-1})/m_{k-1}-g\theta_1\delta_{k1}$. With $S_{k+1}=S_k-m_k$ and $S_{k-1}=S_k+m_{k-1}$, the coefficient of $\theta_k$ becomes $-gS_k(1/m_k+1/m_{k-1})/l_k=-Q_{kk}$, and those of $\theta_{k\pm1}$ coincide with $-Q_{k,k\pm1}$ in Eq.~(\ref{eq:Q}).
+For the linearization, $\dot\theta_k^2$ and $\tau_k-gS_k$ are of second order, so to first order $l_k\ddot\theta_k=gS_{k+1}(\theta_{k+1}-\theta_k)/m_k-gS_{k-1}(\theta_k-\theta_{k-1})/m_{k-1}-g\theta_1\delta_{k1}$. Using $S_{k+1}=S_k-m_k$ and $S_{k-1}=S_k+m_{k-1}$ reproduces each entry of Eq.~(\ref{eq:Q}).
 \end{proof}
 
-Theorem~\ref{thm:tension} and Corollary~\ref{cor:linear-limit} thus close the circle: the inverse mass matrix of the linear theory is the zero-angle value of the tension matrix of the nonlinear theory, and the physical interpretation of Corollary~\ref{cor:Q} (nearest-neighbour coupling through rod tensions) holds exactly at all amplitudes.
+The inverse mass matrix of the small-oscillation problem is thus the tension matrix of the full nonlinear problem frozen at zero angle, rescaled by the rod lengths. In the angle description, the nearest-neighbor coupling of Theorem~\ref{thm:inverse} is the small-amplitude shadow of the fact that each mass is held only by two rods.
 
-\subsection{Structure-Preserving Nonlinear Integration}
+Theorem~\ref{thm:tension} also gives a simple algorithm: one tridiagonal solve and one explicit formula per evaluation, about ten lines of code (Appendix). Recursive multibody algorithms reach the same cost proportional to $n$ for general serial chains,\cite{featherstone2008rigid,jain2011robot,baraff1996linear} and constrained integrators of the SHAKE/RATTLE family exploit the same tridiagonal matrices for chains.\cite{bailey2008efficient,andersen1983rattle} The point here is transparency rather than speed records. Figure~\ref{fig:nonlinear}(a) compares a Python implementation of Eqs.~(\ref{eq:tension}) and (\ref{eq:acc}) with forming and factorizing the dense $\M(\btheta)$. The two agree to a relative difference below $5\times10^{-12}$ for $n\le3000$. Below about $n=30$ the dense route is faster, because the fixed overhead of the interpreter dominates, while at $n=3000$ the tension route takes $2\times10^{-4}$\,s against $0.6$\,s. As a check that connects the two halves of the paper, Fig.~\ref{fig:nonlinear}(b) shows that a uniform 50-mass chain released from its fundamental mode with amplitude $\varepsilon$ deviates from the linear normal-mode solution by an amount that, relative to $\varepsilon$, scales as $\varepsilon^2$ (observed exponent $1.99$), as expected from the cubic leading nonlinearity. The accelerations were integrated with the adaptive Runge--Kutta method DOP853.\cite{hairer1993solving}
 
-Any explicit integrator applied to $\dot{\Rstate}=(\dot{\boldsymbol\theta},\ddot{\boldsymbol\theta})$ inherits the $\mathcal{O}(n)$ cost of Theorem~\ref{thm:tension} per stage. For long simulations a structure-preserving alternative is RATTLE~\cite{andersen1983rattle,leimkuhler1994symplectic}, applied to the Cartesian positions $\mathbf{q}_i$ with constraints $\phi_k(\mathbf{q})=\tfrac12(|\mathbf{q}_k-\mathbf{q}_{k-1}|^2-l_k^2)=0$ and Lagrange multipliers proportional to the tensions:
-\begin{align}
-  \mathbf{q}^{k+1}&=\mathbf{q}^{k}+\Delta t\,\mathbf{v}^{k}+\tfrac{\Delta t^2}{2}\boldsymbol{\mathcal{M}}^{-1}\bigl(\mathbf{F}-\mathbf{G}(\mathbf{q}^k)\trans\boldsymbol\lambda\bigr),\qquad \boldsymbol\phi(\mathbf{q}^{k+1})=\mathbf{0},\label{eq:rattle-q}\\
-  \mathbf{v}^{k+1}&=\frac{\mathbf{q}^{k+1}-\mathbf{q}^{k}}{\Delta t}+\tfrac{\Delta t}{2}\boldsymbol{\mathcal{M}}^{-1}\bigl(\mathbf{F}-\mathbf{G}(\mathbf{q}^{k+1})\trans\boldsymbol\mu\bigr),\qquad \mathbf{G}(\mathbf{q}^{k+1})\,\mathbf{v}^{k+1}=\mathbf{0},\label{eq:rattle-v}
-\end{align}
-where $\mathbf{G}=\partial\boldsymbol\phi/\partial\mathbf{q}$ and $\mathbf{F}$ is gravity. RATTLE is second order, time-reversible and symplectic on the constraint manifold, and it enforces the rod lengths to solver tolerance at every step. Because constraint $k$ involves only masses $k-1$ and $k$, both the Newton matrix $\mathbf{G}(\mathbf{q}^{k+1})\boldsymbol{\mathcal{M}}^{-1}\mathbf{G}(\mathbf{q}^{k})\trans$ for $\boldsymbol\lambda$ in Eq.~(\ref{eq:rattle-q}) and the symmetric matrix $\mathbf{G}\boldsymbol{\mathcal{M}}^{-1}\mathbf{G}\trans$ for $\boldsymbol\mu$ in Eq.~(\ref{eq:rattle-v}) are tridiagonal, with the same pattern as $\mathbf{B}(\boldsymbol\theta)$. Each step therefore costs $\mathcal{O}(n)$ operations per Newton iteration; about two iterations per step were needed in our tests.
-
-\subsection{Numerical Results}
-\label{sec:nonlinear-validation}
-
-Figure~\ref{fig:nonlinear} summarizes the nonlinear results. (a) The tension formulation agrees with the dense formulation to a relative difference below $4\times10^{-12}$ for $n\le3000$; one evaluation takes $1.7\times10^{-4}$\,s at $n=3000$ against $0.68$\,s for the dense route (about $4000$ times faster), and $6.8\times10^{-3}$\,s at $n=10^5$.
-
-(b) For a strongly chaotic test, the non-uniform triple pendulum of Section~\ref{sec:validation} is released from the horizontal position ($\theta_i(0)=\pi/2$, $\dot\theta_i(0)=0$) and integrated for $200$\,s; the energy error is normalized by $m_{\mathrm{tot}}gL_{\mathrm{tot}}$. RATTLE with $\Delta t=10^{-3}$\,s keeps the error bounded below $5.6\times10^{-5}$ with no growth ($3.1\times10^{-5}$ in the first tenth of the run, $2.7\times10^{-5}$ in the last). Classical RK4 with the same step is more accurate on this horizon but drifts, from $6\times10^{-10}$ to $1.1\times10^{-8}$; adaptive DOP853 drifts from $3.7\times10^{-6}$ to $9.6\times10^{-5}$ at tolerance $10^{-6}$ and to $1.4\times10^{-8}$ at $10^{-9}$. We therefore do not claim that RATTLE is more accurate than high-order methods over moderate horizons; its advantages are the absence of secular drift, exact preservation of the constraints and symplecticity, which matter for long-time and statistical studies. All four methods use the $\mathcal{O}(n)$ formulation.
-
-(c) In the same chaotic regime, the RATTLE error at $t=2$\,s with respect to a DOP853 reference (tolerance $10^{-13}$) decreases with observed order $2.00$.
-
-(d) As a cross-validation between the nonlinear and linear theories, a uniform $n=50$ chain is released from its fundamental mode shape with amplitude $\varepsilon$. The maximum deviation from the linear modal solution over $5$\,s, relative to $\varepsilon$, decreases as $\varepsilon^2$ (observed order $1.99$), as expected from the cubic leading nonlinearity.
-
-\begin{figure}[htbp]
+\begin{figure}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/nonlinear.png}
-  \caption{Exact nonlinear dynamics. (a) Wall time of one evaluation of the exact accelerations: dense $\M(\boldsymbol\theta)$ with LU versus the tension formulation of Theorem~\ref{thm:tension}. (b) Energy error for the chaotic triple pendulum released from the horizontal: RATTLE, RK4 and DOP853. (c) RATTLE convergence in the chaotic regime. (d) Deviation of the nonlinear solution of an $n=50$ chain from the linear modal solution versus initial amplitude.}
+  \caption{(a) Time for one evaluation of the exact nonlinear accelerations (single thread, Python/NumPy): dense mass matrix with LU factorization versus the tension system of Theorem~\ref{thm:tension}. (b) Maximum deviation, over $0\le t\le5$\,s, of the nonlinear motion of a uniform 50-mass chain ($m_{\mathrm{tot}}=1$\,kg, $L=1$\,m) from the linear normal-mode solution, divided by the initial amplitude $\varepsilon$ of the fundamental mode.}
   \label{fig:nonlinear}
 \end{figure}
 
+\section{Suggested problems}
+\label{sec:problems}
+
+\begin{enumerate}
+  \item Expand the kinetic energy of the double and triple pendulum and verify Proposition~\ref{prop:T} and the factorization of Eq.~(\ref{eq:factor}).
+  \item Derive Eq.~(\ref{eq:string}) directly from Newton's law, using the horizontal components of the rod tensions $\tau_j=gS_j$ at small angles, without passing through the Lagrangian.
+  \item Invert the $2\times2$ and $3\times3$ mass matrices of a pendulum with arbitrary masses and lengths and compare with Eq.~(\ref{eq:Minv}). Use Eq.~(\ref{eq:Q}) to find the frequencies of a double pendulum with $m_1\neq m_2$ and check the limits $m_2\to0$ and $m_2\to\infty$.
+  \item Compute the frequencies of uniform chains for $n=4,\dots,4096$ and confirm that they lie below the hanging-chain values by about $1/(4n)$. Give a heuristic explanation of the effective length $L+l/2$. (Hint: in the discrete chain, the mass of each segment is concentrated at its lower end, while the tension in segment $j$ supports everything below its upper end. Compare the tension at a given height with the continuum value $\rho gz$.)
+  \item Implement Eqs.~(\ref{eq:tension}) and (\ref{eq:acc}) with a tridiagonal solver and integrate a triple pendulum released from the horizontal. Monitor the energy, and compare the running time with that of the dense formulation as $n$ grows.
+  \item Find a motion of the triple pendulum in which some tension $\tau_k$ becomes negative. Could a chain of beads on a string perform this motion?
+\end{enumerate}
+
 \section{Conclusions}
 
-This work presented a structural framework for the linear and nonlinear dynamics of the planar $n$-mass pendulum.  Its basis is the explicit matrix formulation, with a direct proof, of the cumulative mass-sum rule (Eq.~\ref{eq:prefix-sum}) and its systematic use as an organizing principle, including the factorization~(\ref{eq:M-factor}) of the mass matrix.  The factorization implies that the inverse mass matrix and the dynamic matrix $\M^{-1}\K$ are tridiagonal in closed form (Theorem~\ref{thm:inverse}, Corollary~\ref{cor:Q}), so the state-space operator is assembled in $\mathcal{O}(n)$ operations without solving any linear system, and that the problem is similar to a Jacobi matrix, which proves that the natural frequencies are simple and that the $k$-th mode has $k-1$ sign changes (Theorem~\ref{thm:spectrum}). Numerically, the closed form is faster than the dense route by orders of magnitude, more accurate by about four orders of magnitude at $n=3000$, and reproduces the continuous hanging chain with $\mathcal{O}(n^{-1})$ convergence. The same structure yields a symplectic St\"ormer--Verlet integrator with $\mathcal{O}(n)$ cost per step and an $\mathcal{O}(n)$ energy evaluation, complementing the exact but dense transition matrix when $n$ is large.  The standard generalized-eigenvalue solution and a scaled-and-squared matrix-exponential implementation agree with \texttt{scipy.linalg.expm} to double-precision round-off in the tested cases. Because the transition matrix is constant, it can be precomputed once and reused across many simulations.
+The dense coupling of the multiple pendulum in angle coordinates is a property of the description, not of the physics. A single factorization, $\M=\Lm\E\T\D\E\Lm$, shows that the small oscillations are those of a beaded string under the tensions $gS_j$. It gives tridiagonal formulas for $\M^{-1}$ and $\M^{-1}\K$ directly in the angles, and lets classical results on Jacobi matrices deliver the qualitative structure of the normal modes. For large amplitudes the rod tensions satisfy a tridiagonal system whose zero-angle limit is the inverse mass matrix, so the linear and nonlinear descriptions fit together and the exact dynamics can be coded in a few lines at a cost proportional to $n$. Natural extensions, suitable for projects, include rigid links with distributed mass (for which the structure becomes block tridiagonal), damping and driving, and experiments that compare measured mode frequencies of a physical chain with the hanging-chain limit.
 
-For the nonlinear dynamics, the rod tensions satisfy a symmetric positive-definite tridiagonal system whose zero-angle value is the core $(\mathbf{E}\trans\mathbf{D}\mathbf{E})^{-1}$ of the inverse mass matrix (Theorem~\ref{thm:tension}), so the exact accelerations follow in $\mathcal{O}(n)$ operations and the linear theory is recovered as its small-amplitude limit (Corollary~\ref{cor:linear-limit}). The formulation is about 4000 times faster than the dense one at $n=3000$, and a RATTLE integrator built on the same tridiagonal structure is second order with bounded energy error in the chaotic regime.
-
-Natural extensions include rigid links with distributed mass, joint damping and actuation for control design, implicit or exponential integrators~\cite{hochbruck2010exponential} for very fine chains, and experimental validation of the predicted spectra.
-
-\subsection*{Funding}
-This research received no external funding.
-
-\subsection*{Competing Interests}
-The authors declare no competing interests.
-
-\subsection*{Data and Code Availability}
-The source code, validation and benchmark scripts and generated figures are openly available at \url{https://github.com/yonatanorion/Unified-n-Mass-Pendulum-Operator-Framework} and archived at Zenodo, \doi{10.5281/zenodo.20102179}.  All numerical results in this paper can be regenerated with \texttt{Code/validation/run\_validation.py} and \texttt{Code/validation/benchmark\_structure.py}, \texttt{benchmark\_symplectic.py} and \texttt{benchmark\_nonlinear.py}; the closed-form structure, the linear integrator and the nonlinear tension formulation with RATTLE are implemented in \texttt{Code/src/structure.py}, \texttt{symplectic.py} and \texttt{chain.py}.  The core implementation is reproduced in Appendix~\ref{app:python}.
+\section*{Author declarations}
+\noindent\textbf{Conflict of interest.} The authors have no conflicts to disclose.\\
+\textbf{Data and code availability.}
+\ifanon
+Python code that reproduces all figures and checks every formula in this paper is provided as supplementary material.
+\else
+Python code that reproduces all figures and checks every formula in this paper is openly available at \url{https://github.com/yonatanorion/Unified-n-Mass-Pendulum-Operator-Framework} and archived at Zenodo, \doi{10.5281/zenodo.20102179}.
+\fi\\
+\textbf{Use of AI tools.} An AI assistant (Claude, Anthropic) was used to help verify the literature and references, write and test code, run the numerical checks and draft and edit parts of the text. The authors reviewed all content and take full responsibility for the paper.
 
 \appendix
-\section{Core Python Implementation}
-\label{app:python}
+\section*{Appendix: code}
+The following Python functions implement Eq.~(\ref{eq:Q}) and Theorem~\ref{thm:tension}.
 
-\begin{lstlisting}[caption={Core implementation of linear matrix assembly and propagation.}, label=lst:python]
+\begin{lstlisting}
 import numpy as np
+from scipy.linalg import solveh_banded
 
-def assemble_system(masses, lengths, g=9.81):
-    """Assemble A, M, and K using precomputed suffix masses."""
-    masses = np.asarray(masses, dtype=float)
-    lengths = np.asarray(lengths, dtype=float)
-    n = len(masses)
-    S = np.cumsum(masses[::-1])[::-1]
-    M = np.zeros((n, n))
-    K = np.zeros((n, n))
-    for j in range(n):
-        for k in range(n):
-            M[j, k] = S[max(j, k)] * lengths[j] * lengths[k]
-        K[j, j] = S[j] * g * lengths[j]
-    # Closed-form tridiagonal Q = M^{-1} K (Corollary 1), no linear solve.
-    inv_m = 1.0 / masses
-    inv_prev = np.concatenate(([0.0], inv_m[:-1]))
-    Q = np.diag(g * S * (inv_m + inv_prev) / lengths)
-    Q += np.diag(-g * S[:-1] * inv_m[:-1] / lengths[1:], -1)
-    Q += np.diag(-g * S[1:] * inv_m[:-1] / lengths[:-1], 1)
-    A = np.block([
-        [np.zeros((n, n)), np.eye(n)],
-        [-Q, np.zeros((n, n))]
-    ])
-    return A, M, K
+def dynamical_matrix(m, l, g=9.81):
+    """Tridiagonal Q = M^-1 K of Eq. (Q): returns (diag, sub, sup)."""
+    S = np.cumsum(m[::-1])[::-1]                 # S_k = mass below rod k
+    inv_prev = np.concatenate(([0.0], 1.0 / m[:-1]))
+    diag = g * S * (1.0 / m + inv_prev) / l
+    sub = -g * S[:-1] / (m[:-1] * l[1:])         # Q[k, k-1]
+    sup = -g * S[1:] / (m[:-1] * l[:-1])         # Q[k-1, k]
+    return diag, sub, sup
 
-def peano_baker_step(A, dt, N=20, eta=0.5):
-    """Scaled-and-squared Taylor/Peano--Baker approximation."""
-    B = A * dt
-    norm_B = np.linalg.norm(B, ord=np.inf)
-    s = 0 if norm_B <= eta else int(np.ceil(np.log2(norm_B / eta)))
-    B = B / (2**s)
-    dim = A.shape[0]
-    Phi = np.eye(dim)
-    term = np.eye(dim)
-    for k in range(1, N + 1):
-        term = (term @ B) / k
-        Phi += term
-    for _ in range(s):
-        Phi = Phi @ Phi
-    return Phi
-
-def propagate_linear(Phi, R0, t):
-    """Propagate linear system using precomputed transition matrix."""
-    R = np.zeros((len(t), len(R0)))
-    R[0] = R0
-    for i in range(1, len(t)):
-        R[i] = Phi @ R[i-1]
-    return R
-
+def accelerations(th, om, m, l, g=9.81):
+    """Exact nonlinear angular accelerations via rod tensions (n >= 2)."""
+    inv_m = 1.0 / m
+    ab = np.zeros((2, m.size))
+    ab[1] = inv_m + np.concatenate(([0.0], inv_m[:-1]))     # B_kk
+    ab[0, 1:] = -np.cos(np.diff(th)) * inv_m[:-1]           # B_k,k+1
+    r = l * om**2
+    r[0] += g * np.cos(th[0])
+    tau = solveh_banded(ab, r)                               # tensions
+    s = np.sin(np.diff(th))
+    acc = np.zeros_like(th)
+    acc[:-1] += tau[1:] * s * inv_m[:-1]
+    acc[1:] -= tau[:-1] * s * inv_m[:-1]
+    acc[0] -= g * np.sin(th[0])
+    return acc / l
 \end{lstlisting}
 
 \bibliographystyle{unsrtnat}
