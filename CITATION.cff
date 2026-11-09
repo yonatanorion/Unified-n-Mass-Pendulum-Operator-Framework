@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software or framework, please cite it as below."
 title: "The multiple pendulum as a beaded string: hidden tridiagonal structure from normal modes to nonlinear dynamics"
 type: software
-version: 3.0.1
+version: 3.1.0
 date-released: 2026-11-09
 license: MIT
 doi: 10.5281/zenodo.20102179

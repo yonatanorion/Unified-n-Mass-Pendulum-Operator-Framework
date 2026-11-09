@@ -1,6 +1,4 @@
-% Compile two versions from this file:
-%   anonymous (AJP submission):  pdflatex "\def\anonymous{}\input{Main}"
-%   named (preprint / Zenodo):   pdflatex Main
+% Build: pdflatex Main && bibtex Main && pdflatex Main && pdflatex Main
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -21,8 +19,6 @@
 \geometry{margin=1in}
 \setlength{\emergencystretch}{2em}
 
-\newif\ifanon
-\ifdefined\anonymous \anontrue \else \anonfalse \fi
 
 \newtheorem{proposition}{Proposition}
 \newtheorem{theorem}{Theorem}
@@ -46,15 +42,10 @@
 
 \title{The multiple pendulum as a beaded string:\\ hidden tridiagonal structure from normal modes to nonlinear dynamics}
 
-\ifanon
-  \author{}
-  \date{}
-\else
-  \author[1]{Yonatan Ali Rodr\'iguez Arias\thanks{Corresponding author: \texttt{yonatanorion\_84@hotmail.com}; ORCID: \href{https://orcid.org/0000-0001-6080-2898}{0000-0001-6080-2898}}}
+\author[1]{Yonatan Ali Rodr\'iguez Arias\thanks{Corresponding author: \texttt{yonatanorion\_84@hotmail.com}; ORCID: \href{https://orcid.org/0000-0001-6080-2898}{0000-0001-6080-2898}}}
   \author[1]{Sandra Arellano Gonz\'alez\thanks{\texttt{ag.sandra012@gmail.com}; ORCID: \href{https://orcid.org/0000-0002-2904-0474}{0000-0002-2904-0474}}}
   \affil[1]{Instituto Polit\'ecnico Nacional, Escuela Superior de Ingenier\'ia Mec\'anica y El\'ectrica (ESIME) Unidad Zacatenco, Ciudad de M\'exico 07738, Mexico}
   \date{November 2026}
-\fi
 
 \begin{document}
 \maketitle
@@ -69,7 +60,7 @@ The double pendulum is the standard first example of chaos in mechanics, and cha
 
 Physically this is puzzling. Each mass is acted on only by gravity and by the two rods attached to it, so the dynamics should couple each link only to its neighbors. This paper explains where the nearest-neighbor structure is hidden and what follows from it. The central observation is a factorization of the mass matrix (Sec.~\ref{sec:eom}) that exposes, after a change of variables, a familiar system: a beaded string under nonuniform tension (Sec.~\ref{sec:string}). Back in angle coordinates, the inverse mass matrix and the dynamical matrix are tridiagonal in closed form. The normal modes then follow from the classical theory of tridiagonal matrices, and the continuum limit reproduces the hanging chain (Sec.~\ref{sec:modes}). For large amplitudes, a Newtonian formulation with the rod tensions as unknowns again leads to a tridiagonal system, and its zero-angle limit is the inverse mass matrix of the linear theory rescaled by the rod lengths (Sec.~\ref{sec:nonlinear}).
 
-None of the ingredients is new in isolation. Daniel Bernoulli's 1732 memoir on the small oscillations of bodies attached to a flexible thread and of the vertically hanging chain already contains both the discrete and the continuous problem,\cite{bernoulli1732theoremata} the beaded string and its oscillation properties are treated in the classic monograph of Gantmacher and Krein,\cite{gantmacher2002oscillation} the continuous hanging chain is a textbook problem,\cite{verbin2015boundary} hanging chains of discrete links have been analyzed in this journal, by McCreesh \emph{et al.}\ in terms of the displacements of the pivots and by Levinson in terms of the link angles for a general class of links,\cite{mccreesh1975vibrations,levinson1977natural} the continuum equation has been derived as the limit of the discrete one,\cite{weng1994transverse,lee2003analytically} a tridiagonal system for the tensions of a discrete chain appears in Preston's analysis of whips and chains,\cite{preston2011motion} and computational multibody dynamics achieves cost proportional to $n$ for any serial chain through recursive or sparse algorithms.\cite{featherstone2008rigid,jain2011robot,baraff1996linear,bailey2008efficient} Our purpose is to connect these results in a single, elementary thread, written in the angle coordinates in which students first meet the problem, with explicit formulas that can be checked by hand for $n=2$ and coded in a few lines. We have not found the identification of the zero-angle tension matrix with the inverse mass matrix (Corollary~\ref{cor:link}) stated explicitly. Suggested problems are collected in Sec.~\ref{sec:problems}.
+None of the ingredients is new in isolation. Daniel Bernoulli's 1732 memoir on the small oscillations of bodies attached to a flexible thread and of the vertically hanging chain already contains both the discrete and the continuous problem,\cite{bernoulli1732theoremata} the beaded string and its oscillation properties are treated in the classic monograph of Gantmacher and Krein,\cite{gantmacher2002oscillation} the continuous hanging chain is a textbook problem,\cite{verbin2015boundary} hanging chains of discrete links have been analyzed in the \emph{American Journal of Physics}, by McCreesh \emph{et al.}\ in terms of the displacements of the pivots and by Levinson in terms of the link angles for a general class of links,\cite{mccreesh1975vibrations,levinson1977natural} the continuum equation has been derived as the limit of the discrete one,\cite{weng1994transverse,lee2003analytically} a tridiagonal system for the tensions of a discrete chain appears in Preston's analysis of whips and chains,\cite{preston2011motion} and computational multibody dynamics achieves cost proportional to $n$ for any serial chain through recursive or sparse algorithms.\cite{featherstone2008rigid,jain2011robot,baraff1996linear,bailey2008efficient} Our purpose is to connect these results in a single, elementary thread, written in the angle coordinates in which students first meet the problem, with explicit formulas that can be checked by hand for $n=2$ and coded in a few lines. We have not found the identification of the zero-angle tension matrix with the inverse mass matrix (Corollary~\ref{cor:link}) stated explicitly. Suggested problems are collected in Sec.~\ref{sec:problems}.
 
 \section{Equations of motion in angle coordinates}
 \label{sec:eom}
@@ -251,11 +242,7 @@ The dense coupling of the multiple pendulum in angle coordinates is a property o
 \section*{Author declarations}
 \noindent\textbf{Conflict of interest.} The authors have no conflicts to disclose.\\
 \textbf{Data and code availability.}
-\ifanon
-Python code that reproduces all figures and checks every formula in this paper is provided as supplementary material.
-\else
-Python code that reproduces all figures and checks every formula in this paper is openly available at \url{https://github.com/yonatanorion/Unified-n-Mass-Pendulum-Operator-Framework} and archived at Zenodo, \doi{10.5281/zenodo.20102179}.
-\fi\\
+Python code that reproduces all figures and checks the main formulas and numerical statements of this paper is openly available at \url{https://github.com/yonatanorion/Unified-n-Mass-Pendulum-Operator-Framework} and archived at Zenodo, \doi{10.5281/zenodo.20102179}.\\
 \textbf{Use of AI tools.} An AI assistant (Claude, Anthropic) was used to assist with literature searches and reference checking, write and test code, run the numerical checks and draft and edit parts of the text. The authors reviewed all content and take full responsibility for the paper.
 
 \appendix

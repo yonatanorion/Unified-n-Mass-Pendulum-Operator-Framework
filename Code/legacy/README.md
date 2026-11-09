@@ -1,7 +1,7 @@
 # Legacy material
 
 Scripts and figures from earlier versions of the paper, kept so that their
-results remain reproducible. They are not used by the current (v3, AJP) paper.
+results remain reproducible. They are not used by the current (v3) paper.
 
 | Path | Version | Purpose |
 |---|---|---|
