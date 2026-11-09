@@ -10,14 +10,14 @@ import sys
 from pathlib import Path
 from scipy.linalg import expm
 
-CODE_DIR = Path(__file__).resolve().parents[1]
+CODE_DIR = Path(__file__).resolve().parents[2]
 if str(CODE_DIR) not in sys.path:
     sys.path.insert(0, str(CODE_DIR))
 
 from src.assembly import assemble_system
 from src.propagator import propagate_linear, peano_baker_step
 
-FIGURES_DIR = CODE_DIR / 'figures'
+FIGURES_DIR = CODE_DIR / 'legacy' / 'figures'
 FIGURES_DIR.mkdir(exist_ok=True)
 
 plt.rcParams.update({
