@@ -1,5 +1,6 @@
 """
-A Unified Structural and Operator Framework for the Linear n-Mass Pendulum
+The multiple pendulum as a beaded string: closed-form tridiagonal structure,
+normal modes and exact O(n) nonlinear dynamics of the planar n-mass pendulum.
 """
 
 from .assembly import assemble_system
@@ -18,7 +19,7 @@ from .structure import (
 from .symplectic import linear_energy, max_frequency, verlet_propagate
 from . import chain
 
-__version__ = "2.0.0"
+__version__ = "3.0.0"
 __all__ = [
     "assemble_system",
     "peano_baker_step",

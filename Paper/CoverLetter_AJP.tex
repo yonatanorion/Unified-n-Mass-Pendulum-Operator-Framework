@@ -1,0 +1,28 @@
+\documentclass[11pt]{letter}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\signature{Yonatan Ali Rodr\'iguez Arias\\ on behalf of both authors}
+\address{Instituto Polit\'ecnico Nacional\\ ESIME Unidad Zacatenco\\ Ciudad de M\'exico 07738, Mexico\\ \texttt{yonatanorion\_84@hotmail.com}}
+\date{\today}
+\begin{document}
+\begin{letter}{The Editor\\ \emph{American Journal of Physics}}
+\opening{Dear Editor,}
+
+We submit the manuscript ``The multiple pendulum as a beaded string: hidden tridiagonal structure from normal modes to nonlinear dynamics'' for consideration as a regular article in the \emph{American Journal of Physics}. The authors are Yonatan Ali Rodr\'iguez Arias and Sandra Arellano Gonz\'alez (Instituto Polit\'ecnico Nacional, Mexico).
+
+\textbf{Why the manuscript suits AJP.} Students who go beyond the double pendulum meet equations of motion in which every mass seems coupled to every other through a dense mass matrix. The manuscript shows, at the level of an advanced undergraduate or beginning graduate mechanics course, that this coupling is an artifact of the angle coordinates. A one-line factorization of the mass matrix reveals a beaded string under nonuniform tension, gives closed-form tridiagonal expressions for the inverse mass matrix and the dynamical matrix, and lets classical results on Jacobi matrices explain why the frequencies are never degenerate and why mode $k$ has $k-1$ nodes. The continuum limit reproduces the hanging chain, and we report the simple observation that the discrete chain behaves like a continuous one lengthened by half a link. For large amplitudes, the rod tensions obey a tridiagonal system whose zero-angle limit is the inverse mass matrix rescaled by the rod lengths, so the linear and nonlinear descriptions fit together and the exact dynamics can be coded in about ten lines. The paper connects introductory mechanics, linear algebra and computational physics. It is self-contained, every formula can be checked by hand for $n=2$, and it ends with six suggested problems for courses and student projects.
+
+\textbf{Relation to prior work.} We state openly that the individual ingredients are known: the beaded string and its oscillation theory (Gantmacher and Krein), Bernoulli's discrete and continuous hanging chain, earlier AJP studies of chains of discrete links, a tridiagonal tension system for discrete chains (Preston), and $O(n)$ multibody algorithms (Featherstone, Baraff, and SHAKE/RATTLE methods for chains). Our contribution is a unified, elementary presentation in the angle coordinates that students use, together with explicit formulas, the identification of the zero-angle tension matrix with the inverse mass matrix rescaled by the rod lengths, and checked numerical illustrations. The manuscript is not under consideration elsewhere. An earlier, longer version with a different focus has been posted as a preprint on Zenodo.
+
+\textbf{Use of AI tools.} In accordance with AIP Publishing policy, we disclose that an AI assistant (Claude, Anthropic) was used to help verify the literature and references, write and test the accompanying code, run the numerical checks and draft and edit parts of the text. The authors reviewed, verified and revised all content and take full responsibility for the manuscript.
+
+\textbf{Supplementary material.} Anonymized Python code that reproduces both figures, contains the appendix listing verbatim and checks the main formulas and numerical statements (automated tests) is provided as supplementary material for the reviewers.
+
+Thank you for considering our manuscript.
+
+\closing{Sincerely,}
+\end{letter}
+\end{document}

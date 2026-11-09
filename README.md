@@ -1,243 +1,102 @@
-# Closed-Form Tridiagonal Structure and O(n) Algorithms for the Linear and Nonlinear n-Mass Pendulum
+# The Multiple Pendulum as a Beaded String
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20102179.svg)](https://doi.org/10.5281/zenodo.20102179)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
 
-This repository contains the scientific paper, figures, and reference Python implementation for:
+Paper, figures and reference Python code for:
 
-> **Closed-Form Tridiagonal Structure and $\mathcal{O}(n)$ Algorithms for the Linear and Nonlinear $n$-Mass Pendulum**  
-> *Yonatan Ali Rodríguez Arias & Sandra Arellano González*
+> **The multiple pendulum as a beaded string: hidden tridiagonal structure from normal modes to nonlinear dynamics**
+> *Yonatan Ali Rodríguez Arias & Sandra Arellano González* — Instituto Politécnico Nacional (ESIME Zacatenco)
 
-The project presents:
+In the usual angle coordinates, the mass matrix of a planar pendulum with $n$ point masses is dense. The paper shows that this coupling is an artifact of the coordinates:
 
-* **Direct Structural Matrix Assembly:** $\mathcal{O}(n^2)$ formulation via the **cumulative mass-sum rule** ($S_j = \sum_{i=j}^n m_i$).
-* **Linear State-Space Generation:** Compact first-order formulation $\dot{\mathbf{R}} = \mathcal{A}\mathbf{R}$ with diagonal gravitational stiffness.
-* **Exact Modal Decoupling:** Generalized eigenvalue solution ($\mathbf{K}\mathbf{U} = \mathbf{M}\mathbf{U}\mathbf{\Omega}^2$) providing a reference baseline.
-* **Operator-Based Linear Propagation:** Scaled-and-squared **Peano-Baker / Taylor series** approximation for the discrete transition matrix $\Phi(\Delta t) = e^{\mathcal{A}\Delta t}$.
-* **Rigorous Numerical Validation:** Concordance to double-precision machine epsilon ($\sim 10^{-15}$ rad) against `scipy.linalg.expm` and modal solutions.
-* **Nonlinear Double-Pendulum Energy Check:** Numerical validation confirming the corrected coupling sign $\sin(\theta_d - \theta_k)$ and energy conservation.
+* **Factorization:** $\mathbf{M}=\mathbf{L}\mathbf{E}^{\mathsf T}\mathbf{D}\mathbf{E}\mathbf{L}$, with suffix masses $S_j=\sum_{i\ge j} m_i$.
+* **Beaded string:** in horizontal displacements $\mathbf{x}=\mathbf{E}\mathbf{L}\boldsymbol\theta$, the small oscillations are those of a beaded string with tensions $gS_j$.
+* **Tridiagonal formulas in angles:** closed forms for $\mathbf{M}^{-1}$ and the dynamical matrix $\mathbf{Q}=\mathbf{M}^{-1}\mathbf{K}$, computable in $O(n)$.
+* **Normal modes:** a Jacobi matrix, so the frequencies are simple and mode $k$ has $k-1$ nodes. The spectrum converges to the hanging chain ($J_0$), and the discrete chain behaves like a continuous one of length $L+l/2$.
+* **Exact nonlinear dynamics:** a tridiagonal rod-tension system whose zero-angle limit equals the inverse mass matrix, giving the accelerations in about ten lines of code and $O(n)$ operations.
+
+The paper is written for *American Journal of Physics* readers and includes suggested problems.
 
 ---
 
-# Quickstart
+## Repository structure
+
+```text
+Paper/
+  Main.tex, refs.bib, figures/       manuscript source (one file, two builds)
+  Main.pdf                           named version (preprint)
+  submission_AJP/                    anonymous manuscript, cover letter, supplementary code
+Code/
+  src/structure.py    closed-form M^-1, Q, Jacobi matrix, normal modes (O(n))
+  src/chain.py        tension system, exact nonlinear accelerations, RATTLE integrator
+  src/symplectic.py   Störmer–Verlet for the linear problem, O(n) energy
+  src/assembly.py     dense M, K and state-space matrix (reference)
+  src/modal.py        generalized-eigenvalue modal solution (reference)
+  src/nonlinear.py    dense nonlinear M(theta), c, g (reference)
+  src/propagator.py   scaled-and-squared Taylor transition matrix (reference)
+  src/minimal.py      the paper's appendix listing, verbatim
+  tests/              automated tests of the formulas and numerical statements
+  validation/         figures_ajp.py (paper figures) and earlier benchmark scripts
+```
+
+## Quickstart
 
 ```python
 import numpy as np
-from src.assembly import assemble_system
-from src.propagator import peano_baker_step, propagate_linear
-
-# 1. Define n-mass pendulum parameters (e.g., n = 3)
-masses = [2.0, 1.5, 0.8]   # kg
-lengths = [1.2, 0.9, 0.6]  # m
-
-# 2. Assemble system matrices in O(n^2)
-A, M, K = assemble_system(masses, lengths)
-
-# 3. Precompute discrete-time transition operator
-dt = 0.01  # s
-Phi = peano_baker_step(A, dt, N=20)
-
-# 4. Propagate linear dynamics from initial displacement
-t = np.arange(0, 10.0 + dt, dt)
-R0 = np.array([0.1, 0.05, 0.02, 0.0, 0.0, 0.0])  # [theta0, omega0]
-trajectory = propagate_linear(Phi, R0, t)
-
-print(f"Simulated {len(t)} time steps with shape: {trajectory.shape}")
-```
-
----
-
-# Repository Structure
-
-```text
-.
-├── Code/
-│   ├── figures/
-│   │   └── linear_validation.png
-│   ├── src/
-│   │   ├── __init__.py
-│   │   ├── assembly.py
-│   │   ├── modal.py
-│   │   ├── nonlinear.py
-│   │   └── propagator.py
-│   ├── SymbolicGenTester&Examples/
-│   │   ├── N-MassEqSymboGen.py
-│   │   ├── Output_Equations_pendulum_5_masses.md
-│   │   ├── Output_Equations_pendulum_5_masses.pdf
-│   │   └── README.md
-│   ├── tests/
-│   │   ├── __init__.py
-│   │   ├── test_assembly.py
-│   │   ├── test_modal.py
-│   │   ├── test_nonlinear.py
-│   │   └── test_propagator.py
-│   ├── validation/
-│   │   ├── generate_figures.py
-│   │   └── run_validation.py
-│   └── setup.py
-├── Paper/
-│   ├── figures/
-│   │   ├── 4mass_pendulum.png
-│   │   ├── linear_validation.png
-│   │   └── n_mass_pendulum.png
-│   ├── Main.tex
-│   └── Main.pdf
-├── output/
-│   └── pdf/
-│       └── Unified_n_Mass_Pendulum_revised.pdf
-├── pyproject.toml
-├── LICENSE
-└── README.md
-```
-
----
-
-# Modules
-
-## `src/assembly.py`
-
-Implements the linear matrix assembly using the cumulative mass-sum rule:
-* Mass matrix ($\mathbf{M}$)
-* Diagonal gravitational stiffness matrix ($\mathbf{K}$)
-* State-space operator ($\mathcal{A}$)
-
-Core formulation:
-
-$$
-M_{jk} = \left(\sum_{i=\max(j,k)}^n m_i\right) l_j l_k, \qquad K_{jj} = \left(\sum_{i=j}^n m_i\right) g l_j
-$$
-
----
-
-## `src/structure.py` (new in v2)
-
-Closed-form tridiagonal structure of the linearized problem, all in $\mathcal{O}(n)$:
-
-* `inverse_mass_tridiagonal`: $\mathbf{M}^{-1}$ in closed form (Theorem 1)
-* `dynamic_matrix_tridiagonal` / `apply_dynamic_matrix`: $\mathbf{Q}=\mathbf{M}^{-1}\mathbf{K}$ (Corollary 1)
-* `jacobi_matrix`, `natural_frequencies`, `modal_matrix`: symmetric Jacobi form and spectrum (Theorem 2)
-
----
-
-## `src/symplectic.py` (new in v2)
-
-Störmer–Verlet on $\ddot{\boldsymbol\theta}=-\mathbf{Q}\boldsymbol\theta$ with $\mathcal{O}(n)$ cost per step, $\mathcal{O}(n)$ energy evaluation and a stability check ($\Delta t\,\omega_n<2$).
-
----
-
-## `src/chain.py` (new in v2)
-
-Exact nonlinear dynamics in $\mathcal{O}(n)$ through the tridiagonal rod-tension system (Theorem 3), plus a symplectic RATTLE integrator in Cartesian coordinates with tridiagonal constraint solves.
-
-```python
+from src.structure import dynamic_matrix_tridiagonal, natural_frequencies
 from src import chain
-acc = chain.angular_acceleration(theta, omega, masses, lengths)        # O(n), exact
-t, th, om, _ = chain.rattle_propagate(theta0, omega0, masses, lengths, dt=1e-3, n_steps=10_000)
+
+m = np.array([2.0, 1.5, 0.8]); l = np.array([1.2, 0.9, 0.6])
+
+d, sub, sup = dynamic_matrix_tridiagonal(m, l)      # tridiagonal Q = M^-1 K, O(n)
+omega = natural_frequencies(m, l)                   # simple frequencies, rad/s
+
+theta = np.array([1.0, 0.5, -0.3]); thetadot = np.zeros(3)
+acc = chain.angular_acceleration(theta, thetadot, m, l)   # exact nonlinear, O(n)
+tau = chain.tensions(theta, thetadot, m, l)               # rod tensions
 ```
 
----
+Run from the `Code/` directory, or install with `pip install -e ".[dev]"`.
 
-## `src/propagator.py`
-
-Implements operator-based linear propagation using a scaled-and-squared Peano-Baker/Taylor expansion:
-
-$$
-\mathbf{B} = \frac{\mathcal{A}\Delta t}{2^s}, \qquad \Phi(\Delta t) \approx \left(\sum_{k=0}^{N}\frac{\mathbf{B}^k}{k!}\right)^{2^s}
-$$
-
-Scaling controls truncation error when $\|\mathcal{A}\Delta t\|$ is large. The transition matrix $\Phi(\Delta t)$ is computed once and reused across simulations.
-
----
-
-## `src/modal.py`
-
-Implements the standard generalized-eigenvalue solution of $\mathbf{M}\ddot{\boldsymbol{\theta}}+\mathbf{K}\boldsymbol{\theta}=\mathbf{0}$ via `scipy.linalg.eigh`, providing an independent reference solution.
-
----
-
-## `src/nonlinear.py`
-
-Implements the exact nonlinear mass matrix $\mathbf{M}(\boldsymbol{\theta})$, velocity-squared coupling vector $\mathbf{c}(\boldsymbol{\theta}, \dot{\boldsymbol{\theta}})$, gravity vector $\mathbf{g}(\boldsymbol{\theta})$, first-order state derivative, and total physical energy $E = T + U$.
-
----
-
-## `SymbolicGenTester&Examples/N-MassEqSymboGen.py`
-
-CLI tool and script to generate full symbolic equations of motion for an arbitrary $n$-mass pendulum formatted in Markdown and LaTeX.
+## Tests and figures
 
 ```bash
-# Direct CLI execution for 5 masses:
-python "Code/SymbolicGenTester&Examples/N-MassEqSymboGen.py" -n 5 -o output_5_mass.md
+pytest                                              # 53 tests
+python Code/validation/figures_ajp.py               # Figs. 2 and 3 of the paper
 ```
 
----
+The scripts `benchmark_structure.py`, `benchmark_symplectic.py` and `benchmark_nonlinear.py` reproduce the extended numerical studies of the earlier v2.0.0 preprint.
 
-# Installation & Testing
-
-Install dependencies in development mode:
+## Building the paper
 
 ```bash
-pip install -e ".[dev]"
+cd Paper
+pdflatex Main && bibtex Main && pdflatex Main && pdflatex Main            # named version
+pdflatex "\def\anonymous{}\input{Main}"                                   # anonymous (AJP)
 ```
 
-Run unit tests locally:
+## Version history
 
-```bash
-pytest
-```
+* **v3.0.0:** rewritten as an AJP article around the beaded-string picture, with prior work credited (Bernoulli 1732, Gantmacher–Krein, McCreesh et al., Levinson, Lee, Preston, Baraff, Bailey et al., Konishi & Yanagita).
+* **v2.0.0:** closed-form tridiagonal structure and O(n) linear and nonlinear algorithms.
+* **v1.x:** original operator framework.
 
-or with `uv`:
+## License
 
-```bash
-uv run pytest
-```
+MIT License. See [LICENSE](LICENSE).
 
----
+## Citation
 
-# Running Validations & Figures
-
-## Run numerical validation tables
-
-```bash
-python Code/validation/run_validation.py
-```
-
-## Structure, symplectic and nonlinear benchmarks (v2 figures)
-
-```bash
-python Code/validation/benchmark_structure.py     # Fig. 3, Table 2
-python Code/validation/benchmark_symplectic.py    # Fig. 5
-python Code/validation/benchmark_nonlinear.py     # Fig. 6
-```
-
-Add `--quick` for a shorter run. Timings are platform dependent; the paper's were measured single-threaded.
-
-## Generate paper figures
-
-```bash
-python Code/validation/generate_figures.py
-```
-
----
-
-# License
-
-This project is released under the **MIT License**. See [LICENSE](LICENSE) for details.
-
----
-
-# Citation
-
-If you use this repository or framework in your research, please cite:
+See [CITATION.cff](CITATION.cff), or:
 
 ```bibtex
-@article{rodriguez_arellano_2026_pendulum,
-  author    = {Rodr{\'i}guez Arias, Yonatan Ali and Arellano Gonz{\'a}lez, Sandra},
-  title     = {Closed-Form Tridiagonal Structure and $\mathcal{O}(n)$ Algorithms for the Linear and Nonlinear $n$-Mass Pendulum},
-  year      = {2026},
-  doi       = {10.5281/zenodo.20102179},
-  url       = {https://doi.org/10.5281/zenodo.20102179}
+@misc{rodriguez_arellano_2026_pendulum,
+  author = {Rodr{\'i}guez Arias, Yonatan Ali and Arellano Gonz{\'a}lez, Sandra},
+  title  = {The multiple pendulum as a beaded string: hidden tridiagonal structure from normal modes to nonlinear dynamics},
+  year   = {2026},
+  doi    = {10.5281/zenodo.20102179},
+  url    = {https://doi.org/10.5281/zenodo.20102179}
 }
 ```
-
