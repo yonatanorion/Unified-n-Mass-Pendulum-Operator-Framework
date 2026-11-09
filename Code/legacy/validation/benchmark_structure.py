@@ -9,7 +9,7 @@ Scaling and accuracy study for the closed-form tridiagonal structure.
    converges to the continuous hanging chain, omega_k = (j_{0,k}/2) sqrt(g/L),
    with j_{0,k} the zeros of the Bessel function J_0.
 
-Usage:  python Code/validation/benchmark_structure.py [--quick] [--out FIG.png]
+Usage:  python Code/legacy/validation/benchmark_structure.py [--quick] [--out FIG.png]
 """
 
 import argparse
@@ -22,7 +22,7 @@ import numpy as np
 from scipy.linalg import eigh
 from scipy.special import jn_zeros
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from src.structure import (  # noqa: E402
     apply_dynamic_matrix,
     dynamic_matrix_tridiagonal,

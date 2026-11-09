@@ -6,7 +6,7 @@ with the closed-form tridiagonal Q, compared with the dense transition matrix.
 (b) Second-order convergence against the exact modal solution.
 (c) Cost per time step versus n, and one-off cost of precomputing Phi.
 
-Usage:  python Code/validation/benchmark_symplectic.py [--quick] [--out FIG.png]
+Usage:  python Code/legacy/validation/benchmark_symplectic.py [--quick] [--out FIG.png]
 """
 
 import argparse
@@ -17,7 +17,7 @@ import time
 import numpy as np
 from scipy.linalg import expm
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from src.assembly import assemble_system  # noqa: E402
 from src.modal import solve_modal  # noqa: E402
 from src.propagator import peano_baker_step  # noqa: E402

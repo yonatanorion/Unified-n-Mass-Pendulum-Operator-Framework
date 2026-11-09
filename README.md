@@ -27,18 +27,22 @@ The paper is written for *American Journal of Physics* readers and includes sugg
 Paper/
   Main.tex, refs.bib, figures/       manuscript source (one file, two builds)
   Main.pdf                           named version (preprint)
+  CoverLetter_AJP.tex                cover letter source
   submission_AJP/                    anonymous manuscript, cover letter, supplementary code
 Code/
   src/structure.py    closed-form M^-1, Q, Jacobi matrix, normal modes (O(n))
   src/chain.py        tension system, exact nonlinear accelerations, RATTLE integrator
+  src/minimal.py      the paper's appendix listing, verbatim
   src/symplectic.py   Störmer–Verlet for the linear problem, O(n) energy
   src/assembly.py     dense M, K and state-space matrix (reference)
   src/modal.py        generalized-eigenvalue modal solution (reference)
   src/nonlinear.py    dense nonlinear M(theta), c, g (reference)
   src/propagator.py   scaled-and-squared Taylor transition matrix (reference)
-  src/minimal.py      the paper's appendix listing, verbatim
   tests/              automated tests of the formulas and numerical statements
-  validation/         figures_ajp.py (paper figures) and earlier benchmark scripts
+  validation/         figures_ajp.py (Figs. 2 and 3 of the paper)
+  figures/            current paper figures
+  SymbolicGenTester&Examples/   symbolic equations of motion for any n (SymPy)
+  legacy/             scripts and figures of earlier versions (v1.2, v2.0)
 ```
 
 ## Quickstart
@@ -63,11 +67,19 @@ Run from the `Code/` directory, or install with `pip install -e ".[dev]"`.
 ## Tests and figures
 
 ```bash
-pytest                                              # 53 tests
+pytest                                              # 57 tests
 python Code/validation/figures_ajp.py               # Figs. 2 and 3 of the paper
 ```
 
-The scripts `benchmark_structure.py`, `benchmark_symplectic.py` and `benchmark_nonlinear.py` reproduce the extended numerical studies of the earlier v2.0.0 preprint.
+The extended numerical studies of the earlier preprints (v1.2, v2.0) are reproducible with the scripts in `Code/legacy/` (see its README).
+
+## Symbolic equations of motion
+
+`Code/SymbolicGenTester&Examples/N-MassEqSymboGen.py` generates the full nonlinear equations of motion for any n with SymPy, in Markdown and LaTeX. It is useful for checking Proposition 1 and Problems 1–3 of the paper by computer:
+
+```bash
+python "Code/SymbolicGenTester&Examples/N-MassEqSymboGen.py" -n 4 -o pendulum_4_masses.md
+```
 
 ## Building the paper
 
@@ -79,7 +91,7 @@ pdflatex "\def\anonymous{}\input{Main}"                                   # anon
 
 ## Version history
 
-* **v3.0.0:** rewritten as an AJP article around the beaded-string picture, with prior work credited (Bernoulli 1732, Gantmacher–Krein, McCreesh et al., Levinson, Lee, Preston, Baraff, Bailey et al., Konishi & Yanagita).
+* **v3.0.0:** rewritten as an AJP article (submitted to *American Journal of Physics*) around the beaded-string picture, with prior work credited (Bernoulli 1732, Gantmacher–Krein, McCreesh et al., Levinson, Lee, Preston, Baraff, Bailey et al., Konishi & Yanagita).
 * **v2.0.0:** closed-form tridiagonal structure and O(n) linear and nonlinear algorithms.
 * **v1.x:** original operator framework.
 

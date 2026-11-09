@@ -10,7 +10,7 @@ Exact nonlinear dynamics in O(n) via the tridiagonal tension system.
 (d) Small-amplitude limit: the nonlinear solution approaches the linear one
     with relative difference O(eps^2) for initial amplitude eps (n = 50).
 
-Usage:  python Code/validation/benchmark_nonlinear.py [--quick] [--out FIG.png]
+Usage:  python Code/legacy/validation/benchmark_nonlinear.py [--quick] [--out FIG.png]
 """
 
 import argparse
@@ -21,7 +21,7 @@ import time
 import numpy as np
 from scipy.integrate import solve_ivp
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from src import chain as C  # noqa: E402
 from src.structure import modal_matrix, suffix_masses  # noqa: E402
 
