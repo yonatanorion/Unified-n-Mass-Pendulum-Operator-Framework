@@ -19,7 +19,7 @@ from .structure import (
 from .symplectic import linear_energy, max_frequency, verlet_propagate
 from . import chain
 
-__version__ = "3.0.1"
+__version__ = "3.1.0"
 __all__ = [
     "assemble_system",
     "peano_baker_step",

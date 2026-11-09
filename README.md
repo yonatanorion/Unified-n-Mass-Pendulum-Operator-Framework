@@ -17,7 +17,7 @@ In the usual angle coordinates, the mass matrix of a planar pendulum with $n$ po
 * **Normal modes:** a Jacobi matrix, so the frequencies are simple and mode $k$ has $k-1$ nodes. The spectrum converges to the hanging chain ($J_0$), and the discrete chain behaves like a continuous one of length $L+l/2$.
 * **Exact nonlinear dynamics:** a tridiagonal rod-tension system whose zero-angle limit equals the inverse mass matrix, giving the accelerations in about ten lines of code and $O(n)$ operations.
 
-The paper is written for *American Journal of Physics* readers and includes suggested problems.
+The paper is written for instructors and students of advanced mechanics and includes suggested problems.
 
 ---
 
@@ -25,10 +25,8 @@ The paper is written for *American Journal of Physics* readers and includes sugg
 
 ```text
 Paper/
-  Main.tex, refs.bib, figures/       manuscript source (one file, two builds)
-  Main.pdf                           named version (preprint)
-  CoverLetter_AJP.tex                cover letter source
-  submission_AJP/                    anonymous manuscript, cover letter, supplementary code
+  Main.tex, refs.bib, figures/       manuscript source
+  Main.pdf                           compiled paper (preprint)
 Code/
   src/structure.py    closed-form M^-1, Q, Jacobi matrix, normal modes (O(n))
   src/chain.py        tension system, exact nonlinear accelerations, RATTLE integrator
@@ -39,7 +37,7 @@ Code/
   src/nonlinear.py    dense nonlinear M(theta), c, g (reference)
   src/propagator.py   scaled-and-squared Taylor transition matrix (reference)
   tests/              automated tests of the formulas and numerical statements
-  validation/         figures_ajp.py (Figs. 2 and 3 of the paper)
+  validation/         figures.py (Figs. 2 and 3 of the paper)
   figures/            current paper figures
   SymbolicGenTester&Examples/   symbolic equations of motion for any n (SymPy)
   legacy/             scripts and figures of earlier versions (v1.2, v2.0)
@@ -68,7 +66,7 @@ Run from the `Code/` directory, or install with `pip install -e ".[dev]"`.
 
 ```bash
 pytest                                              # 57 tests
-python Code/validation/figures_ajp.py               # Figs. 2 and 3 of the paper
+python Code/validation/figures.py                   # Figs. 2 and 3 of the paper
 ```
 
 The extended numerical studies of the earlier preprints (v1.2, v2.0) are reproducible with the scripts in `Code/legacy/` (see its README).
@@ -85,14 +83,14 @@ python "Code/SymbolicGenTester&Examples/N-MassEqSymboGen.py" -n 4 -o pendulum_4_
 
 ```bash
 cd Paper
-pdflatex Main && bibtex Main && pdflatex Main && pdflatex Main            # named version
-pdflatex "\def\anonymous{}\input{Main}"                                   # anonymous (AJP)
+pdflatex Main && bibtex Main && pdflatex Main && pdflatex Main
 ```
 
 ## Version history
 
+* **v3.1.0:** journal-submission material removed (anonymous build, cover letter, submission package); the paper is maintained as an open preprint. Paper content unchanged.
 * **v3.0.1:** repository cleanup (earlier scripts and figures moved to `Code/legacy/`); paper unchanged.
-* **v3.0.0:** rewritten as an AJP article (submitted to *American Journal of Physics*) around the beaded-string picture, with prior work credited (Bernoulli 1732, Gantmacher–Krein, McCreesh et al., Levinson, Lee, Preston, Baraff, Bailey et al., Konishi & Yanagita).
+* **v3.0.0:** rewritten as a pedagogical article around the beaded-string picture, with prior work credited (Bernoulli 1732, Gantmacher–Krein, McCreesh et al., Levinson, Lee, Preston, Baraff, Bailey et al., Konishi & Yanagita).
 * **v2.0.0:** closed-form tridiagonal structure and O(n) linear and nonlinear algorithms.
 * **v1.x:** original operator framework.
 

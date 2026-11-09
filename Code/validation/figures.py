@@ -1,5 +1,5 @@
 """
-Figures for the AJP version of the paper.
+Figures of the paper (v3).
 
 Fig. 2  (modes.png)
   (a) First four mode shapes of a uniform 40-mass chain, as horizontal
@@ -16,7 +16,7 @@ Fig. 3  (nonlinear.png)
   (b) Deviation of the nonlinear solution of a uniform 50-mass chain from the
       linear modal solution, relative to the initial amplitude eps.
 
-Usage: python Code/validation/figures_ajp.py [--outdir Paper/figures]
+Usage: python Code/validation/figures.py [--outdir Paper/figures]
 """
 
 import os
