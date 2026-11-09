@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software or framework, please cite it as below."
+title: "Closed-Form Tridiagonal Structure and O(n) Algorithms for the Linear and Nonlinear n-Mass Pendulum"
+type: software
+version: 2.0.0
+date-released: 2026-11-09
+license: MIT
+doi: 10.5281/zenodo.20102179
+repository-code: "https://github.com/yonatanorion/Unified-n-Mass-Pendulum-Operator-Framework"
+authors:
+  - family-names: "Rodríguez Arias"
+    given-names: "Yonatan Ali"
+    orcid: "https://orcid.org/0000-0001-6080-2898"
+    affiliation: "Instituto Politécnico Nacional, ESIME Zacatenco"
+    email: "yonatanorion_84@hotmail.com"
+  - family-names: "Arellano González"
+    given-names: "Sandra"
+    orcid: "https://orcid.org/0000-0002-2904-0474"
+    affiliation: "Instituto Politécnico Nacional, ESIME Zacatenco"
+keywords:
+  - n-mass pendulum
+  - tridiagonal inverse
+  - Jacobi matrix
+  - symplectic integration
+  - nonlinear dynamics
+  - RATTLE
