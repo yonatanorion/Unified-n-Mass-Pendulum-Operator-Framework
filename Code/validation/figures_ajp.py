@@ -4,7 +4,8 @@ Figures for the AJP version of the paper.
 Fig. 2  (modes.png)
   (a) First four mode shapes of a uniform 40-mass chain, as horizontal
       displacements of the masses, compared with the continuous hanging chain
-      of effective length L + l/2 (z = height above the free end).
+      of effective length L + l/2 whose free end lies l/2 below the lowest
+      mass (z = height above the lowest mass; both normalized there).
   (b) Relative error of the three lowest frequencies versus the hanging-chain
       values omega_k = (j_{0,k}/2) sqrt(g/L), with the empirical 1/(4n) line
       (discrete frequencies are lower, as for a chain lengthened by l/2).
@@ -18,14 +19,19 @@ Fig. 3  (nonlinear.png)
 Usage: python Code/validation/figures_ajp.py [--outdir Paper/figures]
 """
 
-import argparse
 import os
-import sys
-import time
 
-import numpy as np
-from scipy.integrate import solve_ivp
-from scipy.special import j0, jn_zeros
+# Single-threaded linear algebra so that the timings in Fig. 3(a) are reproducible.
+for _var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_var, "1")
+
+import argparse  # noqa: E402
+import sys  # noqa: E402
+import time  # noqa: E402
+
+import numpy as np  # noqa: E402
+from scipy.integrate import solve_ivp  # noqa: E402
+from scipy.special import j0, jn_zeros  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from src import chain as C  # noqa: E402
@@ -71,7 +77,7 @@ def fig_modes(plt, out):
         ax[0].axvline(off, color="k", lw=0.4, alpha=0.4)
         ax[0].text(off, 1.04, f"$k={k+1}$", ha="center", fontsize=9)
     ax[0].set_ylim(-0.05, 1.12); ax[0].set_xticks([])
-    ax[0].set_ylabel("height above free end, $z/L$")
+    ax[0].set_ylabel("height above the lowest mass, $z/L$")
     ax[0].set_title("(a) Modes: $n=40$ beads vs continuum", fontsize=10)
     ax[0].plot([], [], "o", color=BLUE, ms=3, label="$n=40$ chain (horizontal displacement)")
     ax[0].plot([], [], color=GREY, label="hanging chain of length $L+l/2$")

@@ -36,7 +36,8 @@ Code/
   src/modal.py        generalized-eigenvalue modal solution (reference)
   src/nonlinear.py    dense nonlinear M(theta), c, g (reference)
   src/propagator.py   scaled-and-squared Taylor transition matrix (reference)
-  tests/              40 automated tests of every formula
+  src/minimal.py      the paper's appendix listing, verbatim
+  tests/              automated tests of the formulas and numerical statements
   validation/         figures_ajp.py (paper figures) and earlier benchmark scripts
 ```
 
@@ -62,7 +63,7 @@ Run from the `Code/` directory, or install with `pip install -e ".[dev]"`.
 ## Tests and figures
 
 ```bash
-pytest                                              # 40 tests
+pytest                                              # 53 tests
 python Code/validation/figures_ajp.py               # Figs. 2 and 3 of the paper
 ```
 
@@ -78,7 +79,7 @@ pdflatex "\def\anonymous{}\input{Main}"                                   # anon
 
 ## Version history
 
-* **v3.0.0:** rewritten as an AJP article around the beaded-string picture, with prior work credited (Gantmacher–Krein, Preston, Baraff, Bailey et al., Konishi & Yanagita).
+* **v3.0.0:** rewritten as an AJP article around the beaded-string picture, with prior work credited (Bernoulli 1732, Gantmacher–Krein, McCreesh et al., Levinson, Lee, Preston, Baraff, Bailey et al., Konishi & Yanagita).
 * **v2.0.0:** closed-form tridiagonal structure and O(n) linear and nonlinear algorithms.
 * **v1.x:** original operator framework.
 
