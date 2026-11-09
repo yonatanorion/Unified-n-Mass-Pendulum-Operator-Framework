@@ -23,7 +23,7 @@ import os
 
 # Single-threaded linear algebra so that the timings in Fig. 3(a) are reproducible.
 for _var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
-    os.environ.setdefault(_var, "1")
+    os.environ[_var] = "1"
 
 import argparse  # noqa: E402
 import sys  # noqa: E402
